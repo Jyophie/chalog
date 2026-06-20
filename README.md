@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# chalog 🍵
 
-## Getting Started
+> 차 사진으로 시작하는 나만의 티 아카이브
 
-First, run the development server:
+차 패키지·라벨·찻잎 사진을 올리면 AI가 차 정보를 1차 분석하고, 사용자가 부족한 정보를 보정하면
+그 차에 맞는 **우리는 가이드**를 생성해 **내 차 아카이브**에 저장·기록하는 AI 티 가이드 서비스.
+
+차 이름을 정확히 맞히는 앱이 아니라, "오늘 이 차를 어떻게 우려 마실지" 빠르게 알려주는 데 집중합니다.
+
+## 기술 스택
+
+| 레이어 | 사용 |
+|--------|------|
+| 프레임워크 | Next.js 16 (App Router) · TypeScript · Turbopack |
+| 백엔드 | Next.js Route Handlers (`/api/*`) |
+| DB / 인증 / 스토리지 | Supabase (Postgres · Auth · Storage) |
+| AI | OpenAI (Vision 분석 · 가이드 생성) |
+| 데이터 페칭 | TanStack Query |
+| 폼 상태 | 등록 플로우 Zustand · 폼 react-hook-form + Zod |
+| 스타일 | Tailwind CSS v4 · shadcn/ui |
+| 배포 | Vercel |
+
+## 로컬 실행
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.local.example .env.local   # 값 채우기 (Supabase / OpenAI)
+npm run dev                          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 환경변수
+`.env.local.example` 참고. Supabase URL/키, OpenAI 키 필요.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### DB 마이그레이션
+`supabase/migrations/0001_init.sql` 을 Supabase SQL Editor에서 실행
+(테이블 4개 + RLS + Storage 버킷).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 화면 구성 (MVP)
 
-## Learn More
+랜딩 → 로그인 → 업로드 → AI 분석 → 분석 결과 → 정보 보정 → 브루잉 가이드 → 아카이브 → 차 상세 → 기록 추가
 
-To learn more about Next.js, take a look at the following resources:
+## 프로젝트 구조
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├─ app/                 라우트 + Route Handlers
+├─ components/          UI 컴포넌트 (providers 포함)
+├─ lib/
+│  ├─ supabase/         client / server
+│  ├─ openai/           OpenAI 클라이언트
+│  ├─ schemas/          Zod 데이터 계약
+│  └─ types/            DB 타입
+└─ store/               Zustand (등록 플로우)
+supabase/migrations/    DB 스키마
+```
