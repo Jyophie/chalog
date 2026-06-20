@@ -20,6 +20,7 @@ export type ScanStep =
 interface ScanFlowState {
   imageFile: File | null;
   previewUrl: string | null;
+  imagePath: string | null; // Supabase Storage 경로 ({uid}/...)
   isAnalyzing: boolean;
   analysisResult: AnalysisResult | null;
   correctionForm: Partial<CorrectionForm>;
@@ -27,6 +28,7 @@ interface ScanFlowState {
   currentStep: ScanStep;
 
   setImage: (file: File | null) => void;
+  setImagePath: (path: string | null) => void;
   setAnalyzing: (v: boolean) => void;
   setAnalysisResult: (r: AnalysisResult | null) => void;
   setCorrectionForm: (patch: Partial<CorrectionForm>) => void;
@@ -38,6 +40,7 @@ interface ScanFlowState {
 const initialState = {
   imageFile: null,
   previewUrl: null,
+  imagePath: null,
   isAnalyzing: false,
   analysisResult: null,
   correctionForm: {},
@@ -56,6 +59,7 @@ export const useScanFlow = create<ScanFlowState>((set, get) => ({
       previewUrl: file ? URL.createObjectURL(file) : null,
     });
   },
+  setImagePath: (path) => set({ imagePath: path }),
   setAnalyzing: (v) => set({ isAnalyzing: v }),
   setAnalysisResult: (r) => set({ analysisResult: r }),
   setCorrectionForm: (patch) =>

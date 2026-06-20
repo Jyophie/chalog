@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/server";
 
 const FEATURES = [
   { icon: "📸", label: "사진 한 장으로 차 정보 자동 분석", bg: "bg-tint-green" },
@@ -9,7 +10,12 @@ const FEATURES = [
   { icon: "📚", label: "내 차 컬렉션을 따뜻하게 기록", bg: "bg-tint-beige" },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[420px] flex-col px-6 pb-10 pt-8">
       {/* 로고 */}
@@ -59,7 +65,13 @@ export default function Home() {
         >
           차 사진 등록하기
         </Link>
-        <p className="text-xs text-ink-muted">무료로 시작할 수 있어요 ✨</p>
+        {user ? (
+          <Link href="/archive" className="text-sm font-semibold text-brand">
+            내 차 보관함 보기 →
+          </Link>
+        ) : (
+          <p className="text-xs text-ink-muted">무료로 시작할 수 있어요 ✨</p>
+        )}
       </div>
     </main>
   );
