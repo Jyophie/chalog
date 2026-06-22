@@ -21,7 +21,7 @@ export function PhoneFrame({
   scroll?: boolean;
 }) {
   return (
-    <div className="min-h-dvh w-full bg-[image:var(--gradient-app)] sm:grid sm:place-items-center sm:py-8">
+    <div className="flex min-h-dvh w-full justify-center bg-[image:var(--gradient-app)] sm:items-center sm:py-8">
       <div
         className={cn(
           "flex h-dvh w-full max-w-[400px] flex-col overflow-hidden bg-paper",

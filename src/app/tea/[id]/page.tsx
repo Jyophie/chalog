@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Heart,
   Leaf,
+  Pencil,
   Plus,
   ScrollText,
   Thermometer,
@@ -131,21 +132,30 @@ export default function TeaDetailPage() {
           >
             <ArrowLeft className="size-[18px]" />
           </button>
-          <button
-            type="button"
-            aria-label="즐겨찾기"
-            onClick={() => fav.mutate({ id, value: !tea.is_favorite })}
-            className="grid size-10 place-items-center rounded-full bg-track transition-colors hover:bg-[#e3ddd0]"
-          >
-            <Heart
-              className={cn(
-                "size-[18px]",
-                tea.is_favorite
-                  ? "fill-[#d4714a] text-[#d4714a]"
-                  : "text-ink-muted",
-              )}
-            />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/tea/${id}/edit`}
+              aria-label="정보 수정"
+              className="grid size-10 place-items-center rounded-full bg-track text-brand-ink transition-colors hover:bg-[#e3ddd0]"
+            >
+              <Pencil className="size-[17px]" />
+            </Link>
+            <button
+              type="button"
+              aria-label="즐겨찾기"
+              onClick={() => fav.mutate({ id, value: !tea.is_favorite })}
+              className="grid size-10 place-items-center rounded-full bg-track transition-colors hover:bg-[#e3ddd0]"
+            >
+              <Heart
+                className={cn(
+                  "size-[18px]",
+                  tea.is_favorite
+                    ? "fill-[#d4714a] text-[#d4714a]"
+                    : "text-ink-muted",
+                )}
+              />
+            </button>
+          </div>
         </div>
 
         <div className="mt-5 flex items-end gap-5">

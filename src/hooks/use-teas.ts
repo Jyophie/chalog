@@ -80,6 +80,33 @@ export function useToggleFavorite() {
   });
 }
 
+/** 차 기본 정보 수정 */
+export function useUpdateTea(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: object) =>
+      fetchJson<{ id: string }>(`/api/teas/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tea", id] });
+      qc.invalidateQueries({ queryKey: ["teas"] });
+    },
+  });
+}
+
+/** 저장된 차 정보로 가이드 재생성 */
+export function useRegenerateGuide(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      fetchJson(`/api/teas/${id}/guide`, { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tea", id] }),
+  });
+}
+
 export function useDeleteTea() {
   const qc = useQueryClient();
   return useMutation({

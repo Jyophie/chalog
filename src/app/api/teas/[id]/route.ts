@@ -86,6 +86,10 @@ export async function PATCH(
     brand: patch.brand,
     origin: patch.origin,
     production_year: patch.production_year,
+    leaf_shape: patch.leaf_shape,
+    is_compressed: patch.is_compressed,
+    brewing_tool: patch.brewing_tool,
+    drinking_style: patch.drinking_style,
     user_memo: patch.user_memo,
     is_favorite: patch.is_favorite,
   };
