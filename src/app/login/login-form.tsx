@@ -201,6 +201,20 @@ export function LoginForm({
           Google로 계속하기
         </button>
       </form>
+
+      {isSignup && (
+        <p className="mt-4 text-center text-[11px] leading-relaxed text-ink-muted">
+          가입하면{" "}
+          <a href="/terms" className="underline underline-offset-2">
+            이용약관
+          </a>
+          과{" "}
+          <a href="/privacy" className="underline underline-offset-2">
+            개인정보처리방침
+          </a>
+          에 동의하는 것으로 간주됩니다.
+        </p>
+      )}
     </div>
   );
 }

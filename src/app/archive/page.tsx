@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Archive, Camera, Heart, Plus, Search } from "lucide-react";
+import { Archive, Camera, Heart, Plus, Search, UserRound } from "lucide-react";
 import { useTeas, useToggleFavorite, type TeaListItem } from "@/hooks/use-teas";
 import { TEA_CATEGORIES } from "@/lib/schemas/tea";
 import { PhoneFrame } from "@/components/layout/phone-frame";
@@ -152,13 +152,22 @@ export default function ArchivePage() {
                 {teas ? `${teas.length}종 수집 중` : "불러오는 중"} · 오늘도 한 잔 🍵
               </p>
             </div>
-            <Link
-              href="/upload"
-              aria-label="차 등록"
-              className="grid size-12 shrink-0 place-items-center rounded-full bg-brand text-white shadow-[0px_4px_8px_rgba(74,124,89,0.31)] transition-colors hover:bg-brand-dark"
-            >
-              <Plus className="size-5" />
-            </Link>
+            <div className="flex shrink-0 items-center gap-2">
+              <Link
+                href="/my"
+                aria-label="내 정보"
+                className="grid size-12 place-items-center rounded-full bg-track text-brand-ink transition-colors hover:bg-[#e3ddd0]"
+              >
+                <UserRound className="size-5" />
+              </Link>
+              <Link
+                href="/upload"
+                aria-label="차 등록"
+                className="grid size-12 place-items-center rounded-full bg-brand text-white shadow-[0px_4px_8px_rgba(74,124,89,0.31)] transition-colors hover:bg-brand-dark"
+              >
+                <Plus className="size-5" />
+              </Link>
+            </div>
           </div>
 
           {/* 검색 */}
