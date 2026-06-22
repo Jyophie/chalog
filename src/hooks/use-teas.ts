@@ -44,6 +44,48 @@ export function useTeas() {
   });
 }
 
+/* ── 커뮤니티: 피드 + 공개 차 상세 ──────────────────────────── */
+
+export interface FeedItem {
+  id: string;
+  tea_name: string | null;
+  tea_category: TeaCategory | null;
+  origin: string | null;
+  image_url: string | null;
+  author: string | null;
+  like_count: number;
+  comment_count: number;
+  liked_by_me: boolean;
+  created_at: string;
+}
+
+export function useFeed() {
+  return useQuery({
+    queryKey: ["feed"],
+    queryFn: () =>
+      fetchJson<{ items: FeedItem[]; nextCursor: string | null }>(
+        "/api/feed",
+      ).then((d) => d.items),
+  });
+}
+
+export interface PublicTeaDetail {
+  tea: TeaRow & { image_url: string | null };
+  guide: GuideRow | null;
+  logs: LogRow[];
+  author: string | null;
+  liked_by_me: boolean;
+  is_authed: boolean;
+}
+
+export function usePublicTea(id: string) {
+  return useQuery({
+    queryKey: ["public-tea", id],
+    queryFn: () => fetchJson<PublicTeaDetail>(`/api/p/${id}`),
+    enabled: !!id,
+  });
+}
+
 export function useTea(id: string) {
   return useQuery({
     queryKey: ["tea", id],

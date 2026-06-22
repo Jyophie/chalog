@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Archive, Camera, Heart, Plus, Search, UserRound } from "lucide-react";
+import { Heart, Plus, Search } from "lucide-react";
 import { useTeas, useToggleFavorite, type TeaListItem } from "@/hooks/use-teas";
 import { TEA_CATEGORIES } from "@/lib/schemas/tea";
 import { PhoneFrame } from "@/components/layout/phone-frame";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { Chip } from "@/components/ui/chip";
 import { cn } from "@/lib/utils";
 
@@ -152,22 +153,13 @@ export default function ArchivePage() {
                 {teas ? `${teas.length}종 수집 중` : "불러오는 중"} · 오늘도 한 잔 🍵
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Link
-                href="/my"
-                aria-label="내 정보"
-                className="grid size-12 place-items-center rounded-full bg-track text-brand-ink transition-colors hover:bg-[#e3ddd0]"
-              >
-                <UserRound className="size-5" />
-              </Link>
-              <Link
-                href="/upload"
-                aria-label="차 등록"
-                className="grid size-12 place-items-center rounded-full bg-brand text-white shadow-[0px_4px_8px_rgba(74,124,89,0.31)] transition-colors hover:bg-brand-dark"
-              >
-                <Plus className="size-5" />
-              </Link>
-            </div>
+            <Link
+              href="/upload"
+              aria-label="차 등록"
+              className="grid size-12 shrink-0 place-items-center rounded-full bg-brand text-white shadow-[0px_4px_8px_rgba(74,124,89,0.31)] transition-colors hover:bg-brand-dark"
+            >
+              <Plus className="size-5" />
+            </Link>
           </div>
 
           {/* 검색 */}
@@ -181,8 +173,21 @@ export default function ArchivePage() {
             />
           </div>
 
-          {/* 카테고리 필터 */}
+          {/* 즐겨찾기 토글 + 카테고리 필터 */}
           <div className="-mx-6 mt-3.5 flex gap-2 overflow-x-auto px-6 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <button
+              type="button"
+              onClick={() => setFavOnly((v) => !v)}
+              className={cn(
+                "flex shrink-0 items-center gap-1 rounded-full border-[1.5px] px-3.5 py-2 text-[14px] font-semibold transition-colors",
+                favOnly
+                  ? "border-[#d4714a] bg-[#d4714a] text-white"
+                  : "border-hairline bg-field text-ink-muted",
+              )}
+            >
+              <Heart className={cn("size-3.5", favOnly && "fill-current")} />
+              즐겨찾기
+            </button>
             {["전체", ...TEA_CATEGORIES].map((c) => (
               <Chip
                 key={c}
@@ -250,52 +255,7 @@ export default function ArchivePage() {
           )}
         </div>
 
-        {/* 하단 내비 */}
-        <nav className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-4">
-          <div className="pointer-events-auto flex items-center justify-around rounded-[24px] border border-hairline bg-field py-3 shadow-[0px_-2px_10px_rgba(30,60,35,0.09)]">
-            <div className="flex flex-col items-center gap-1">
-              <span className="grid size-10 place-items-center rounded-[16px] bg-tint-green">
-                <Archive className="size-5 text-brand" />
-              </span>
-              <span className="text-[12px] font-bold text-brand">아카이브</span>
-            </div>
-            <Link href="/upload" className="flex flex-col items-center gap-1">
-              <span className="grid size-10 place-items-center rounded-[16px] bg-brand">
-                <Camera className="size-5 text-white" />
-              </span>
-              <span className="text-[12px] text-ink-muted">등록</span>
-            </Link>
-            <button
-              type="button"
-              onClick={() => setFavOnly((v) => !v)}
-              className="flex flex-col items-center gap-1"
-            >
-              <span
-                className={cn(
-                  "grid size-10 place-items-center rounded-[16px]",
-                  favOnly ? "bg-tint-green" : "bg-transparent",
-                )}
-              >
-                <Heart
-                  className={cn(
-                    "size-5",
-                    favOnly
-                      ? "fill-[#d4714a] text-[#d4714a]"
-                      : "text-ink-muted",
-                  )}
-                />
-              </span>
-              <span
-                className={cn(
-                  "text-[12px]",
-                  favOnly ? "font-bold text-brand" : "text-ink-muted",
-                )}
-              >
-                즐겨찾기
-              </span>
-            </button>
-          </div>
-        </nav>
+        <BottomNav active="archive" />
       </div>
     </PhoneFrame>
   );
