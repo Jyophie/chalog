@@ -32,67 +32,34 @@ function Field({
   );
 }
 
-export function LoginForm({
+/**
+ * 자격 입력 폼. mode를 key로 받아 탭 전환 시 리마운트되며,
+ * useActionState 상태(에러/메시지)와 입력값이 모드별로 분리된다.
+ */
+function CredentialForm({
+  mode,
   next,
   urlError,
 }: {
+  mode: Mode;
   next: string;
   urlError?: string;
 }) {
-  const [mode, setMode] = useState<Mode>("login");
+  const isSignup = mode === "signup";
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
-    mode === "login" ? signIn : signUp,
+    isSignup ? signUp : signIn,
     {},
   );
 
-  const isSignup = mode === "signup";
   const pwTooShort = isSignup && password.length > 0 && password.length < 6;
   const mismatch = isSignup && confirm.length > 0 && password !== confirm;
   const blockSubmit =
     pending || (isSignup && (pwTooShort || mismatch || !password || !confirm));
 
   return (
-    <div className="flex flex-col">
-      {/* 헤더 (Figma 1:186) */}
-      <div className="flex flex-col items-center">
-        <Logo size="lg" className="mb-5" />
-        <div className="rounded-[16px] bg-tint-green px-5 py-2.5">
-          <p className="text-center text-[12px] font-semibold text-mark">
-            차 사진으로 시작하는 나만의 티 아카이브
-          </p>
-        </div>
-        <h1 className="mt-4 text-[24px] font-black leading-8 text-brand-ink">
-          반가워요!
-        </h1>
-        <p className="mt-1 text-[14px] text-ink-muted">
-          {isSignup
-            ? "차 한 잔의 여정을 함께 시작해요"
-            : "차 한 잔의 여정을 함께 기록해요"}
-        </p>
-      </div>
-
-      {/* 로그인 / 회원가입 탭 (Figma 1:210) */}
-      <div className="mt-7 flex gap-1 rounded-[16px] bg-track p-1">
-        {(["login", "signup"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMode(m)}
-            className={cn(
-              "flex-1 rounded-[24px] py-2.5 text-[14px] font-bold transition-colors",
-              mode === m
-                ? "bg-field text-brand-ink shadow-[0px_2px_4px_rgba(0,0,0,0.07)]"
-                : "text-ink-muted",
-            )}
-          >
-            {m === "login" ? "로그인" : "회원가입"}
-          </button>
-        ))}
-      </div>
-
-      {/* 폼 (Figma 1:216) */}
+    <>
       <form action={formAction} className="mt-5 flex flex-col gap-4">
         <input type="hidden" name="next" value={next} />
 
@@ -193,14 +160,14 @@ export function LoginForm({
         </button>
       </form>
 
-      {/* 구분선 (Figma 1:232) */}
+      {/* 구분선 */}
       <div className="my-5 flex items-center gap-3">
         <div className="h-px flex-1 bg-hairline" />
         <span className="text-[12px] text-ink-muted">또는</span>
         <div className="h-px flex-1 bg-hairline" />
       </div>
 
-      {/* 소셜 로그인 (Figma 1:237) */}
+      {/* 소셜 로그인 */}
       <form action={signInWithGoogle}>
         <input type="hidden" name="next" value={next} />
         <button
@@ -224,6 +191,66 @@ export function LoginForm({
           에 동의하는 것으로 간주됩니다.
         </p>
       )}
+    </>
+  );
+}
+
+export function LoginForm({
+  next,
+  urlError,
+}: {
+  next: string;
+  urlError?: string;
+}) {
+  const [mode, setMode] = useState<Mode>("login");
+  const isSignup = mode === "signup";
+
+  return (
+    <div className="flex flex-col">
+      {/* 헤더 */}
+      <div className="flex flex-col items-center">
+        <Logo size="lg" className="mb-5" />
+        <div className="rounded-[16px] bg-tint-green px-5 py-2.5">
+          <p className="text-center text-[12px] font-semibold text-mark">
+            차 사진으로 시작하는 나만의 티 아카이브
+          </p>
+        </div>
+        <h1 className="mt-4 text-[24px] font-black leading-8 text-brand-ink">
+          반가워요!
+        </h1>
+        <p className="mt-1 text-[14px] text-ink-muted">
+          {isSignup
+            ? "차 한 잔의 여정을 함께 시작해요"
+            : "차 한 잔의 여정을 함께 기록해요"}
+        </p>
+      </div>
+
+      {/* 로그인 / 회원가입 탭 */}
+      <div className="mt-7 flex gap-1 rounded-[16px] bg-track p-1">
+        {(["login", "signup"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={cn(
+              "flex-1 rounded-[24px] py-2.5 text-[14px] font-bold transition-colors",
+              mode === m
+                ? "bg-field text-brand-ink shadow-[0px_2px_4px_rgba(0,0,0,0.07)]"
+                : "text-ink-muted",
+            )}
+          >
+            {m === "login" ? "로그인" : "회원가입"}
+          </button>
+        ))}
+      </div>
+
+      {/* 모드별로 리마운트되어 상태가 섞이지 않는다 */}
+      <CredentialForm
+        key={mode}
+        mode={mode}
+        next={next}
+        urlError={mode === "login" ? urlError : undefined}
+      />
     </div>
   );
 }
