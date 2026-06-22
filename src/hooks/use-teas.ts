@@ -28,6 +28,7 @@ export interface TeaDetail {
   tea: TeaRow & { image_url: string | null; image_path: string | null };
   guide: GuideRow | null;
   logs: LogRow[];
+  is_owner: boolean;
 }
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {

@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
+  Globe,
   Heart,
   Leaf,
+  Lock,
   Pencil,
   Plus,
   ScrollText,
@@ -14,7 +16,12 @@ import {
   Timer,
   Trash2,
 } from "lucide-react";
-import { useTea, useDeleteTea, useToggleFavorite } from "@/hooks/use-teas";
+import {
+  useTea,
+  useDeleteTea,
+  useToggleFavorite,
+  useUpdateTea,
+} from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BrewTimer, derivePours } from "@/components/brew-timer";
 import { cn } from "@/lib/utils";
@@ -77,7 +84,9 @@ export default function TeaDetailPage() {
   const { data, isLoading, isError } = useTea(id);
   const del = useDeleteTea();
   const fav = useToggleFavorite();
+  const update = useUpdateTea(id);
   const [tab, setTab] = useState<"guide" | "logs">("guide");
+  const [askPublish, setAskPublish] = useState(false);
 
   if (isLoading) {
     return (
@@ -106,7 +115,8 @@ export default function TeaDetailPage() {
     );
   }
 
-  const { tea, guide, logs } = data;
+  const { tea, guide, logs, is_owner } = data;
+  const isPublic = tea.visibility === "public";
   const rated = logs.filter((l) => l.rating != null);
   const avg = rated.length
     ? Math.round(rated.reduce((s, l) => s + (l.rating ?? 0), 0) / rated.length)
@@ -132,30 +142,32 @@ export default function TeaDetailPage() {
           >
             <ArrowLeft className="size-[18px]" />
           </button>
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/tea/${id}/edit`}
-              aria-label="정보 수정"
-              className="grid size-10 place-items-center rounded-full bg-track text-brand-ink transition-colors hover:bg-[#e3ddd0]"
-            >
-              <Pencil className="size-[17px]" />
-            </Link>
-            <button
-              type="button"
-              aria-label="즐겨찾기"
-              onClick={() => fav.mutate({ id, value: !tea.is_favorite })}
-              className="grid size-10 place-items-center rounded-full bg-track transition-colors hover:bg-[#e3ddd0]"
-            >
-              <Heart
-                className={cn(
-                  "size-[18px]",
-                  tea.is_favorite
-                    ? "fill-[#d4714a] text-[#d4714a]"
-                    : "text-ink-muted",
-                )}
-              />
-            </button>
-          </div>
+          {is_owner && (
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/tea/${id}/edit`}
+                aria-label="정보 수정"
+                className="grid size-10 place-items-center rounded-full bg-track text-brand-ink transition-colors hover:bg-[#e3ddd0]"
+              >
+                <Pencil className="size-[17px]" />
+              </Link>
+              <button
+                type="button"
+                aria-label="즐겨찾기"
+                onClick={() => fav.mutate({ id, value: !tea.is_favorite })}
+                className="grid size-10 place-items-center rounded-full bg-track transition-colors hover:bg-[#e3ddd0]"
+              >
+                <Heart
+                  className={cn(
+                    "size-[18px]",
+                    tea.is_favorite
+                      ? "fill-[#d4714a] text-[#d4714a]"
+                      : "text-ink-muted",
+                  )}
+                />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="mt-5 flex items-end gap-5">
@@ -219,6 +231,85 @@ export default function TeaDetailPage() {
             label="기록 횟수"
           />
         </div>
+
+        {/* 공개 설정 (소유자) */}
+        {is_owner && (
+          <div className="mt-4 rounded-[20px] border border-hairline bg-field p-4 shadow-[0px_2px_6px_rgba(30,60,35,0.05)]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {isPublic ? (
+                  <Globe className="size-4 text-brand" />
+                ) : (
+                  <Lock className="size-4 text-ink-muted" />
+                )}
+                <span className="text-[14px] font-bold text-brand-ink">
+                  {isPublic ? "피드에 공개됨" : "비공개"}
+                </span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isPublic}
+                aria-label="피드 공개 전환"
+                disabled={update.isPending}
+                onClick={() =>
+                  isPublic
+                    ? update.mutate({ visibility: "private" })
+                    : setAskPublish(true)
+                }
+                className={cn(
+                  "relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-60",
+                  isPublic ? "bg-brand" : "bg-track",
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-1 size-5 rounded-full bg-white shadow transition-all",
+                    isPublic ? "left-6" : "left-1",
+                  )}
+                />
+              </button>
+            </div>
+
+            {isPublic && !askPublish && (
+              <p className="mt-2 text-[12px] text-ink-muted">
+                ❤️ {tea.like_count} · 💬 {tea.comment_count} · 누구나 피드에서 볼 수
+                있어요.
+              </p>
+            )}
+
+            {askPublish && (
+              <div className="mt-3 rounded-[14px] bg-tint-cream/70 p-3">
+                <p className="text-[12px] font-bold text-[#8b6e52]">
+                  피드에 공개할까요?
+                </p>
+                <p className="mt-1 text-[12px] leading-relaxed text-[#8b6e52]">
+                  차 정보·우림 가이드·시음 기록이 다른 사용자에게 보여요. 사진에
+                  개인정보가 없는지 확인해주세요.
+                </p>
+                <div className="mt-2.5 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAskPublish(false)}
+                    className="flex-1 rounded-pill border border-hairline bg-field py-2 text-[13px] font-bold text-brand-ink"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      update.mutate({ visibility: "public" });
+                      setAskPublish(false);
+                    }}
+                    className="flex-1 rounded-pill bg-brand py-2 text-[13px] font-bold text-white shadow-brand"
+                  >
+                    공개하기
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 탭 */}
         <div className="mt-5 flex gap-1 rounded-[16px] bg-track p-1">
@@ -338,23 +429,27 @@ export default function TeaDetailPage() {
           </div>
         )}
 
-        {/* 기록 추가 CTA */}
-        <Link
-          href={`/tea/${id}/log`}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-pill bg-brand px-6 py-4 text-[16px] font-bold text-white shadow-brand transition-colors hover:bg-brand-dark"
-        >
-          기록 추가하기
-          <Plus className="size-[18px]" />
-        </Link>
+        {/* 기록 추가 CTA (소유자) */}
+        {is_owner && (
+          <>
+            <Link
+              href={`/tea/${id}/log`}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-pill bg-brand px-6 py-4 text-[16px] font-bold text-white shadow-brand transition-colors hover:bg-brand-dark"
+            >
+              기록 추가하기
+              <Plus className="size-[18px]" />
+            </Link>
 
-        <button
-          type="button"
-          onClick={onDelete}
-          disabled={del.isPending}
-          className="mx-auto mt-5 flex items-center justify-center gap-1.5 text-[13px] text-ink-muted transition-colors hover:text-red-500"
-        >
-          <Trash2 className="size-3.5" /> 차 삭제하기
-        </button>
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={del.isPending}
+              className="mx-auto mt-5 flex items-center justify-center gap-1.5 text-[13px] text-ink-muted transition-colors hover:text-red-500"
+            >
+              <Trash2 className="size-3.5" /> 차 삭제하기
+            </button>
+          </>
+        )}
       </main>
     </PhoneFrame>
   );
