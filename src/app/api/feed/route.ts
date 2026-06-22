@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "feed failed" }, { status: 500 });
   }
   if (!teas || teas.length === 0) {
-    return NextResponse.json({ items: [], nextCursor: null });
+    return NextResponse.json({ items: [], nextCursor: null, is_authed: !!user });
   }
 
   // 작성자 닉네임
@@ -86,5 +86,5 @@ export async function GET(request: Request) {
   const nextCursor =
     teas.length === PAGE ? teas[teas.length - 1].created_at : null;
 
-  return NextResponse.json({ items, nextCursor });
+  return NextResponse.json({ items, nextCursor, is_authed: !!user });
 }

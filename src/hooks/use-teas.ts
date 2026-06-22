@@ -59,13 +59,65 @@ export interface FeedItem {
   created_at: string;
 }
 
+export interface FeedResponse {
+  items: FeedItem[];
+  nextCursor: string | null;
+  is_authed: boolean;
+}
+
 export function useFeed() {
   return useQuery({
     queryKey: ["feed"],
-    queryFn: () =>
-      fetchJson<{ items: FeedItem[]; nextCursor: string | null }>(
-        "/api/feed",
-      ).then((d) => d.items),
+    queryFn: () => fetchJson<FeedResponse>("/api/feed"),
+  });
+}
+
+/** 좋아요 토글 (낙관적 업데이트 — 피드 + 공개 상세 캐시 동시 갱신) */
+export function useToggleLike(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (liked: boolean) =>
+      fetchJson(`/api/teas/${id}/like`, { method: liked ? "DELETE" : "POST" }),
+    onMutate: async (liked) => {
+      await qc.cancelQueries({ queryKey: ["public-tea", id] });
+      await qc.cancelQueries({ queryKey: ["feed"] });
+      const prevPublic = qc.getQueryData<PublicTeaDetail>(["public-tea", id]);
+      const prevFeed = qc.getQueryData<FeedResponse>(["feed"]);
+      const delta = liked ? -1 : 1;
+      if (prevPublic) {
+        qc.setQueryData<PublicTeaDetail>(["public-tea", id], {
+          ...prevPublic,
+          liked_by_me: !liked,
+          tea: {
+            ...prevPublic.tea,
+            like_count: Math.max(0, prevPublic.tea.like_count + delta),
+          },
+        });
+      }
+      if (prevFeed) {
+        qc.setQueryData<FeedResponse>(["feed"], {
+          ...prevFeed,
+          items: prevFeed.items.map((it) =>
+            it.id === id
+              ? {
+                  ...it,
+                  liked_by_me: !liked,
+                  like_count: Math.max(0, it.like_count + delta),
+                }
+              : it,
+          ),
+        });
+      }
+      return { prevPublic, prevFeed };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prevPublic) qc.setQueryData(["public-tea", id], ctx.prevPublic);
+      if (ctx?.prevFeed) qc.setQueryData(["feed"], ctx.prevFeed);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["public-tea", id] });
+      qc.invalidateQueries({ queryKey: ["feed"] });
+    },
   });
 }
 

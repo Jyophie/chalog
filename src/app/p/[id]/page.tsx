@@ -10,7 +10,7 @@ import {
   Thermometer,
   Timer,
 } from "lucide-react";
-import { usePublicTea } from "@/hooks/use-teas";
+import { usePublicTea, useToggleLike } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BrewTimer, derivePours } from "@/components/brew-timer";
 import { cn } from "@/lib/utils";
@@ -70,6 +70,7 @@ export default function PublicTeaPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, isError } = usePublicTea(id);
+  const like = useToggleLike(id);
 
   if (isLoading) {
     return (
@@ -120,16 +121,27 @@ export default function PublicTeaPage() {
           >
             <ArrowLeft className="size-[18px]" />
           </button>
-          <div className="flex items-center gap-3 text-[13px] text-ink-muted">
-            <span className="flex items-center gap-1">
+          <div className="flex items-center gap-3 text-[13px] font-semibold text-ink-muted">
+            <button
+              type="button"
+              aria-label="좋아요"
+              onClick={() => {
+                if (!data.is_authed) {
+                  router.push(`/login?next=/p/${id}`);
+                  return;
+                }
+                like.mutate(data.liked_by_me);
+              }}
+              className="flex items-center gap-1 transition-transform active:scale-90"
+            >
               <Heart
                 className={cn(
-                  "size-4",
+                  "size-4 transition-colors",
                   data.liked_by_me && "fill-[#d4714a] text-[#d4714a]",
                 )}
               />
               {tea.like_count}
-            </span>
+            </button>
             <span className="flex items-center gap-1">
               <MessageCircle className="size-4" />
               {tea.comment_count}

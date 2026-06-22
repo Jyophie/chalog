@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart, MessageCircle } from "lucide-react";
-import { useFeed, type FeedItem } from "@/hooks/use-teas";
+import { useFeed, useToggleLike, type FeedItem } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { cn } from "@/lib/utils";
 
-function FeedCard({ item }: { item: FeedItem }) {
+function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
+  const router = useRouter();
+  const like = useToggleLike(item.id);
   return (
     <Link
       href={`/p/${item.id}`}
@@ -57,15 +60,27 @@ function FeedCard({ item }: { item: FeedItem }) {
         </div>
       </div>
       <div className="flex items-center gap-4 px-4 py-2.5">
-        <span className="flex items-center gap-1 text-[13px] font-semibold text-ink-muted">
+        <button
+          type="button"
+          aria-label="좋아요"
+          onClick={(e) => {
+            e.preventDefault();
+            if (!isAuthed) {
+              router.push("/login?next=/explore");
+              return;
+            }
+            like.mutate(item.liked_by_me);
+          }}
+          className="flex items-center gap-1 text-[13px] font-semibold text-ink-muted transition-transform active:scale-90"
+        >
           <Heart
             className={cn(
-              "size-4",
+              "size-4 transition-colors",
               item.liked_by_me && "fill-[#d4714a] text-[#d4714a]",
             )}
           />
           {item.like_count}
-        </span>
+        </button>
         <span className="flex items-center gap-1 text-[13px] font-semibold text-ink-muted">
           <MessageCircle className="size-4" />
           {item.comment_count}
@@ -77,7 +92,9 @@ function FeedCard({ item }: { item: FeedItem }) {
 
 /** 탐색 — 공개 기록 피드 */
 export default function ExplorePage() {
-  const { data: items, isLoading, isError } = useFeed();
+  const { data, isLoading, isError } = useFeed();
+  const items = data?.items;
+  const isAuthed = data?.is_authed ?? false;
 
   return (
     <PhoneFrame scroll={false}>
@@ -120,7 +137,7 @@ export default function ExplorePage() {
           {items && items.length > 0 && (
             <div className="flex flex-col gap-4">
               {items.map((item) => (
-                <FeedCard key={item.id} item={item} />
+                <FeedCard key={item.id} item={item} isAuthed={isAuthed} />
               ))}
             </div>
           )}
