@@ -84,6 +84,7 @@ export async function GET(
     author: profile?.display_name ?? null,
     author_avatar: profile?.avatar_url ?? null,
     liked_by_me: likedByMe,
+    is_owner: !!user && user.id === tea?.user_id,
     is_authed: !!user,
   });
 }

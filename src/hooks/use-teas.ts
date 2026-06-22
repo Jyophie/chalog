@@ -99,6 +99,7 @@ export interface PublicLogDetail {
   author: string | null;
   author_avatar: string | null;
   liked_by_me: boolean;
+  is_owner: boolean;
   is_authed: boolean;
 }
 
@@ -211,6 +212,7 @@ export interface CommentItem {
   body: string;
   created_at: string;
   user_id: string;
+  parent_id: string | null;
   author: string | null;
   author_avatar: string | null;
 }
@@ -233,11 +235,11 @@ export function useComments(logId: string) {
 export function useAddComment(logId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: string) =>
+    mutationFn: ({ body, parentId }: { body: string; parentId?: string }) =>
       fetchJson<{ id: string }>(`/api/logs/${logId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body }),
+        body: JSON.stringify({ body, parent_id: parentId }),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["comments", logId] });

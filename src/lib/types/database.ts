@@ -203,6 +203,7 @@ export interface Database {
           log_id: string;
           user_id: string;
           body: string;
+          parent_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -210,9 +211,30 @@ export interface Database {
           log_id: string;
           user_id: string;
           body: string;
+          parent_id?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["comments"]["Insert"]>;
+        Relationships: [];
+      };
+      reports: {
+        Row: {
+          id: string;
+          reporter_id: string;
+          target_type: "log" | "comment";
+          target_id: string;
+          reason: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          reporter_id: string;
+          target_type: "log" | "comment";
+          target_id: string;
+          reason: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["reports"]["Insert"]>;
         Relationships: [];
       };
     };

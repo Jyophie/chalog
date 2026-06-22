@@ -10,10 +10,12 @@ import {
   useComments,
   useAddComment,
   useDeleteComment,
+  type CommentItem,
 } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { Avatar } from "@/components/ui/avatar";
+import { ReportButton } from "@/components/report-button";
 import { cn } from "@/lib/utils";
 
 function LeafRating({ value }: { value: number }) {
@@ -39,20 +41,101 @@ function fmtDate(iso: string) {
   ).padStart(2, "0")}`;
 }
 
-/** 댓글 섹션 */
+/** 댓글 섹션 (대댓글 한 단계 + 신고) */
 function CommentsSection({ logId }: { logId: string }) {
   const router = useRouter();
   const { data } = useComments(logId);
   const add = useAddComment(logId);
   const del = useDeleteComment(logId);
   const [text, setText] = useState("");
-  const comments = data?.comments ?? [];
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
 
-  function submit() {
+  const comments = data?.comments ?? [];
+  const top = comments.filter((c) => !c.parent_id);
+  const repliesByParent: Record<string, CommentItem[]> = {};
+  comments.forEach((c) => {
+    if (c.parent_id) (repliesByParent[c.parent_id] ??= []).push(c);
+  });
+
+  const me = data?.me;
+  const isAuthed = data?.is_authed ?? false;
+
+  function submitTop() {
     const body = text.trim();
     if (!body) return;
-    add.mutate(body, { onSuccess: () => setText("") });
+    add.mutate({ body }, { onSuccess: () => setText("") });
   }
+  function submitReply(parentId: string) {
+    const body = replyText.trim();
+    if (!body) return;
+    add.mutate(
+      { body, parentId },
+      {
+        onSuccess: () => {
+          setReplyText("");
+          setReplyTo(null);
+        },
+      },
+    );
+  }
+
+  const renderComment = (c: CommentItem, isReply: boolean) => {
+    const canDelete = data?.is_owner || me === c.user_id;
+    const canReport = isAuthed && me !== c.user_id;
+    return (
+      <div key={c.id} className={cn("flex gap-2.5", isReply && "ml-10")}>
+        <Avatar
+          src={c.author_avatar}
+          name={c.author}
+          className={isReply ? "size-7" : "size-8"}
+          fontClassName="text-[12px]"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[13px] font-bold text-brand-ink">
+              {c.author ?? "차 애호가"}
+            </span>
+            <span className="text-[11px] text-ink-muted">
+              {fmtDate(c.created_at)}
+            </span>
+            {canDelete && (
+              <button
+                type="button"
+                aria-label="댓글 삭제"
+                onClick={() => del.mutate(c.id)}
+                className="ml-auto text-ink-muted/60 transition-colors hover:text-red-500"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            )}
+          </div>
+          <p className="mt-0.5 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-brand-ink">
+            {c.body}
+          </p>
+          {(isAuthed || canReport) && (
+            <div className="mt-1 flex items-center gap-3">
+              {isAuthed && !isReply && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReplyTo(replyTo === c.id ? null : c.id);
+                    setReplyText("");
+                  }}
+                  className="text-[12px] font-semibold text-ink-muted transition-colors hover:text-brand"
+                >
+                  답글
+                </button>
+              )}
+              {canReport && (
+                <ReportButton targetType="comment" targetId={c.id} />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="mt-8">
@@ -60,55 +143,50 @@ function CommentsSection({ logId }: { logId: string }) {
         댓글 {comments.length > 0 && `(${comments.length})`}
       </h2>
 
-      <ul className="mt-3 flex flex-col gap-3">
-        {comments.map((c) => {
-          const canDelete = data?.is_owner || data?.me === c.user_id;
-          return (
-            <li key={c.id} className="flex gap-2.5">
-              <Avatar
-                src={c.author_avatar}
-                name={c.author}
-                className="size-8"
-                fontClassName="text-[13px]"
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-bold text-brand-ink">
-                    {c.author ?? "차 애호가"}
-                  </span>
-                  <span className="text-[11px] text-ink-muted">
-                    {fmtDate(c.created_at)}
-                  </span>
-                  {canDelete && (
-                    <button
-                      type="button"
-                      aria-label="댓글 삭제"
-                      onClick={() => del.mutate(c.id)}
-                      className="ml-auto text-ink-muted/60 transition-colors hover:text-red-500"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  )}
-                </div>
-                <p className="mt-0.5 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-brand-ink">
-                  {c.body}
-                </p>
+      <div className="mt-3 flex flex-col gap-4">
+        {top.map((c) => (
+          <div key={c.id} className="flex flex-col gap-3">
+            {renderComment(c, false)}
+            {(repliesByParent[c.id] ?? []).map((r) => renderComment(r, true))}
+            {replyTo === c.id && isAuthed && (
+              <div className="ml-10 flex items-center gap-2">
+                <input
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.nativeEvent.isComposing)
+                      submitReply(c.id);
+                  }}
+                  maxLength={1000}
+                  autoFocus
+                  placeholder={`${c.author ?? "차 애호가"}님에게 답글`}
+                  className="h-[42px] flex-1 rounded-[14px] border border-hairline bg-field px-3.5 text-[13px] text-brand-ink outline-none transition-colors placeholder:text-[#1e2b2080] focus:border-brand"
+                />
+                <button
+                  type="button"
+                  onClick={() => submitReply(c.id)}
+                  disabled={add.isPending || !replyText.trim()}
+                  aria-label="답글 등록"
+                  className="grid size-[42px] shrink-0 place-items-center rounded-[14px] bg-brand text-white shadow-brand transition-colors hover:bg-brand-dark disabled:opacity-50"
+                >
+                  <Send className="size-4" />
+                </button>
               </div>
-            </li>
-          );
-        })}
-        {comments.length === 0 && (
-          <li className="text-[13px] text-ink-muted">첫 댓글을 남겨보세요.</li>
+            )}
+          </div>
+        ))}
+        {top.length === 0 && (
+          <p className="text-[13px] text-ink-muted">첫 댓글을 남겨보세요.</p>
         )}
-      </ul>
+      </div>
 
-      {data?.is_authed ? (
+      {isAuthed ? (
         <div className="mt-4 flex items-center gap-2">
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.nativeEvent.isComposing) submit();
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) submitTop();
             }}
             maxLength={1000}
             placeholder="댓글을 남겨보세요"
@@ -116,7 +194,7 @@ function CommentsSection({ logId }: { logId: string }) {
           />
           <button
             type="button"
-            onClick={submit}
+            onClick={submitTop}
             disabled={add.isPending || !text.trim()}
             aria-label="댓글 등록"
             className="grid size-[46px] shrink-0 place-items-center rounded-[16px] bg-brand text-white shadow-brand transition-colors hover:bg-brand-dark disabled:opacity-50"
@@ -316,6 +394,13 @@ export default function PublicLogPage() {
             </p>
           )}
         </div>
+
+        {/* 기록 신고 (로그인 · 본인 글 아님) */}
+        {data.is_authed && !data.is_owner && (
+          <div className="mt-3 flex justify-end">
+            <ReportButton targetType="log" targetId={id} label="이 기록 신고" />
+          </div>
+        )}
 
         {/* 댓글 */}
         <CommentsSection logId={id} />
