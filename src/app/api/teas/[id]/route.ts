@@ -122,6 +122,19 @@ export async function DELETE(
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
+  // 연결된 사진(차 대표 이미지 + 기록 사진) Storage에서 삭제
+  const [{ data: tea }, { data: logs }] = await Promise.all([
+    supabase.from("teas").select("image_url").eq("id", id).single(),
+    supabase.from("tea_logs").select("photo_url").eq("tea_id", id),
+  ]);
+  const paths = [
+    tea?.image_url,
+    ...(logs ?? []).map((l) => l.photo_url),
+  ].filter((p): p is string => !!p);
+  if (paths.length > 0) {
+    await supabase.storage.from("tea-images").remove(paths);
+  }
+
   const { error } = await supabase.from("teas").delete().eq("id", id);
   if (error)
     return NextResponse.json({ error: "delete failed" }, { status: 500 });

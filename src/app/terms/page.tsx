@@ -29,6 +29,9 @@ export default function TermsPage() {
             본 약관은 chalog(이하 &ldquo;서비스&rdquo;)가 제공하는 차 분석·기록
             서비스의 이용 조건 및 절차, 이용자와 서비스의 권리·의무를 규정합니다.
           </p>
+          <p>
+            본 서비스는 주소희가 운영하는 개인 프로젝트이며, 현재 무료로 제공됩니다.
+          </p>
         </Section>
         <Section title="제2조 (서비스 내용)">
           <p>· 차 사진 업로드 및 AI 기반 정보 분석</p>
@@ -67,8 +70,9 @@ export default function TermsPage() {
             법령이 허용하는 범위에서 책임을 지지 않습니다.
           </p>
         </Section>
-        <Section title="제8조 (문의)">
-          <p>약관 관련 문의: seiyeong@egnis.kr</p>
+        <Section title="제8조 (운영자 및 문의)">
+          <p>운영자: 주소희 (개인 프로젝트)</p>
+          <p>문의: jyophie@gmail.com</p>
         </Section>
 
         <p className="mt-8 text-[12px] text-ink-muted">시행일: 2026-06-22 (초안)</p>
