@@ -142,6 +142,15 @@ export function LoginForm({
           )}
         </Field>
 
+        {!isSignup && (
+          <a
+            href="/forgot-password"
+            className="-mt-2 self-end text-[12px] font-semibold text-ink-muted underline underline-offset-2"
+          >
+            비밀번호를 잊으셨나요?
+          </a>
+        )}
+
         {isSignup && (
           <Field id="passwordConfirm" label="비밀번호 확인">
             <input
