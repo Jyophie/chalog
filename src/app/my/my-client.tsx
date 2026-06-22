@@ -2,7 +2,6 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ChevronRight,
   FileText,
@@ -13,7 +12,7 @@ import {
 import { signOut } from "@/app/login/actions";
 import { updateProfile, deleteAccount, type ProfileState } from "./actions";
 import { PhoneFrame } from "@/components/layout/phone-frame";
-import { TopBar } from "@/components/layout/top-bar";
+import { BottomNav } from "@/components/layout/bottom-nav";
 
 function fmtDate(iso: string | null) {
   if (!iso) return "";
@@ -34,7 +33,6 @@ export function MyClient({
   joinedAt: string | null;
   urlError?: string;
 }) {
-  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [state, formAction, pending] = useActionState<ProfileState, FormData>(
@@ -50,10 +48,13 @@ export function MyClient({
   const initial = (displayName || email || "?").trim().charAt(0).toUpperCase();
 
   return (
-    <PhoneFrame>
-      <TopBar title="내 정보" onBack={() => router.push("/archive")} />
+    <PhoneFrame scroll={false}>
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <header className="px-6 pt-14 pb-2">
+          <h1 className="text-[24px] font-black text-brand-ink">내 정보</h1>
+        </header>
 
-      <main className="flex flex-1 flex-col px-6 pt-2 pb-10">
+        <main className="min-h-0 flex-1 overflow-y-auto px-6 pb-28 pt-2">
         {/* 프로필 카드 */}
         <div className="flex items-center gap-4 rounded-[20px] border border-hairline bg-field p-5 shadow-[0px_2px_6px_rgba(30,60,35,0.05)]">
           <span className="grid size-16 shrink-0 place-items-center rounded-full bg-brand text-[24px] font-black text-white">
@@ -199,7 +200,10 @@ export function MyClient({
             </div>
           )}
         </div>
-      </main>
+        </main>
+
+        <BottomNav active="my" />
+      </div>
     </PhoneFrame>
   );
 }

@@ -62,9 +62,9 @@ export default async function Home() {
             ))}
           </div>
 
-          {/* CTA */}
+          {/* CTA — 비로그인 시 로그인/회원가입으로 */}
           <Link
-            href="/upload"
+            href={user ? "/upload" : "/login?next=/upload"}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-pill bg-brand px-6 py-4 text-[16px] font-bold text-white shadow-brand transition-colors hover:bg-brand-dark"
           >
             차 사진 등록하기

@@ -6,7 +6,7 @@ import { ArrowRight, Camera, ImageIcon, RefreshCw, Upload, X } from "lucide-reac
 import { useScanFlow } from "@/store/scan-flow";
 import { uploadTeaImage, UploadError } from "@/lib/storage";
 import { PhoneFrame } from "@/components/layout/phone-frame";
-import { TopBar } from "@/components/layout/top-bar";
+import { BottomNav } from "@/components/layout/bottom-nav";
 
 const TIPS = [
   "패키지 앞면이 잘 보이도록 찍어요",
@@ -61,10 +61,16 @@ export function UploadForm() {
   }
 
   return (
-    <PhoneFrame>
-      <TopBar title="차 사진 올리기" onBack={() => router.push("/")} />
+    <PhoneFrame scroll={false}>
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <header className="px-6 pt-14 pb-2">
+          <h1 className="text-[24px] font-black text-brand-ink">차 등록</h1>
+          <p className="mt-0.5 text-[14px] text-ink-muted">
+            차 사진을 올리면 AI가 분석해드려요
+          </p>
+        </header>
 
-      <main className="flex flex-1 flex-col px-6 pt-2 pb-10">
+        <main className="min-h-0 flex-1 overflow-y-auto px-6 pb-28 pt-2">
         {/* 안내 배너 */}
         <div className="rounded-[16px] bg-tint-green px-4 py-3.5">
           <p className="text-[14px] font-semibold leading-[1.6] text-mark">
@@ -196,7 +202,10 @@ export function UploadForm() {
           {busy ? "업로드 중…" : "AI 분석 시작하기"}
           {!busy && <ArrowRight className="size-[18px]" />}
         </button>
-      </main>
+        </main>
+
+        <BottomNav active="upload" />
+      </div>
     </PhoneFrame>
   );
 }
