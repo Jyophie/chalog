@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -7,10 +8,18 @@ import {
   Leaf,
   MessageCircle,
   ScrollText,
+  Send,
   Thermometer,
   Timer,
+  Trash2,
 } from "lucide-react";
-import { usePublicTea, useToggleLike } from "@/hooks/use-teas";
+import {
+  usePublicTea,
+  useToggleLike,
+  useComments,
+  useAddComment,
+  useDeleteComment,
+} from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BrewTimer, derivePours } from "@/components/brew-timer";
 import { cn } from "@/lib/utils";
@@ -61,6 +70,112 @@ function GuideRow({ label, value }: { label: string; value?: string | null }) {
       <span className="flex-1 text-[14px] font-semibold text-brand-ink">
         {value}
       </span>
+    </div>
+  );
+}
+
+function fmtDateTime(iso: string) {
+  const d = new Date(iso);
+  return `${String(d.getMonth() + 1).padStart(2, "0")}.${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
+
+/** 댓글 섹션 */
+function CommentsSection({ teaId }: { teaId: string }) {
+  const router = useRouter();
+  const { data } = useComments(teaId);
+  const add = useAddComment(teaId);
+  const del = useDeleteComment(teaId);
+  const [text, setText] = useState("");
+
+  const comments = data?.comments ?? [];
+
+  function submit() {
+    const body = text.trim();
+    if (!body) return;
+    add.mutate(body, { onSuccess: () => setText("") });
+  }
+
+  return (
+    <div className="mt-8">
+      <h2 className="text-[14px] font-black text-brand-ink">
+        댓글 {comments.length > 0 && `(${comments.length})`}
+      </h2>
+
+      <ul className="mt-3 flex flex-col gap-3">
+        {comments.map((c) => {
+          const canDelete = data?.is_owner || data?.me === c.user_id;
+          return (
+            <li key={c.id} className="flex gap-2.5">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-[13px] font-black text-white">
+                {(c.author || "?").charAt(0).toUpperCase()}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-bold text-brand-ink">
+                    {c.author ?? "차 애호가"}
+                  </span>
+                  <span className="text-[11px] text-ink-muted">
+                    {fmtDateTime(c.created_at)}
+                  </span>
+                  {canDelete && (
+                    <button
+                      type="button"
+                      aria-label="댓글 삭제"
+                      onClick={() => del.mutate(c.id)}
+                      className="ml-auto text-ink-muted/60 transition-colors hover:text-red-500"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
+                </div>
+                <p className="mt-0.5 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-brand-ink">
+                  {c.body}
+                </p>
+              </div>
+            </li>
+          );
+        })}
+        {comments.length === 0 && (
+          <li className="text-[13px] text-ink-muted">
+            첫 댓글을 남겨보세요.
+          </li>
+        )}
+      </ul>
+
+      {/* 입력 */}
+      {data?.is_authed ? (
+        <div className="mt-4 flex items-center gap-2">
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) submit();
+            }}
+            maxLength={1000}
+            placeholder="댓글을 남겨보세요"
+            className="h-[46px] flex-1 rounded-[16px] border border-hairline bg-field px-4 text-[14px] text-brand-ink outline-none transition-colors placeholder:text-[#1e2b2080] focus:border-brand"
+          />
+          <button
+            type="button"
+            onClick={submit}
+            disabled={add.isPending || !text.trim()}
+            aria-label="댓글 등록"
+            className="grid size-[46px] shrink-0 place-items-center rounded-[16px] bg-brand text-white shadow-brand transition-colors hover:bg-brand-dark disabled:opacity-50"
+          >
+            <Send className="size-[18px]" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => router.push(`/login?next=/p/${teaId}`)}
+          className="mt-4 w-full rounded-pill border border-hairline bg-field py-3 text-[14px] font-bold text-brand-ink"
+        >
+          로그인하고 댓글 남기기
+        </button>
+      )}
     </div>
   );
 }
@@ -272,6 +387,9 @@ export default function PublicTeaPage() {
             </ul>
           </>
         )}
+
+        {/* 댓글 */}
+        <CommentsSection teaId={id} />
       </main>
     </PhoneFrame>
   );

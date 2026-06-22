@@ -121,6 +121,59 @@ export function useToggleLike(id: string) {
   });
 }
 
+export interface CommentItem {
+  id: string;
+  body: string;
+  created_at: string;
+  user_id: string;
+  author: string | null;
+}
+
+export interface CommentsResponse {
+  comments: CommentItem[];
+  me: string | null;
+  is_owner: boolean;
+  is_authed: boolean;
+}
+
+export function useComments(id: string) {
+  return useQuery({
+    queryKey: ["comments", id],
+    queryFn: () => fetchJson<CommentsResponse>(`/api/teas/${id}/comments`),
+    enabled: !!id,
+  });
+}
+
+export function useAddComment(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: string) =>
+      fetchJson<{ id: string }>(`/api/teas/${id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["comments", id] });
+      qc.invalidateQueries({ queryKey: ["public-tea", id] });
+      qc.invalidateQueries({ queryKey: ["feed"] });
+    },
+  });
+}
+
+export function useDeleteComment(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: string) =>
+      fetchJson(`/api/teas/${id}/comments/${commentId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["comments", id] });
+      qc.invalidateQueries({ queryKey: ["public-tea", id] });
+      qc.invalidateQueries({ queryKey: ["feed"] });
+    },
+  });
+}
+
 export interface PublicTeaDetail {
   tea: TeaRow & { image_url: string | null };
   guide: GuideRow | null;
