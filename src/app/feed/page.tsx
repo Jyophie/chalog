@@ -59,24 +59,29 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
 
   return (
     <article className="overflow-hidden rounded-[20px] border border-hairline bg-field shadow-[0px_2px_12px_rgba(30,60,35,0.05)]">
-      {/* 작성자 헤더 */}
-      <Link href={`/p/${item.id}`} className="flex items-center gap-2.5 px-4 py-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-[14px] font-black text-white">
-          {(item.author || "?").charAt(0).toUpperCase()}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-bold text-brand-ink">
-            {item.author ?? "차 애호가"}
-          </p>
-          <p className="truncate text-[12px] text-ink-muted">
-            {item.tea_name || "이름 미정"}
-            {item.tea_category ? ` · ${item.tea_category}` : ""}
-          </p>
-        </div>
+      {/* 작성자 헤더 — 작성자 영역 탭 시 프로필로 */}
+      <div className="flex items-center gap-2.5 px-4 py-3">
+        <Link
+          href={item.author_id ? `/u/${item.author_id}` : `/p/${item.id}`}
+          className="flex min-w-0 flex-1 items-center gap-2.5"
+        >
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-[14px] font-black text-white">
+            {(item.author || "?").charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[14px] font-bold text-brand-ink">
+              {item.author ?? "차 애호가"}
+            </p>
+            <p className="truncate text-[12px] text-ink-muted">
+              {item.tea_name || "이름 미정"}
+              {item.tea_category ? ` · ${item.tea_category}` : ""}
+            </p>
+          </div>
+        </Link>
         <span className="shrink-0 text-[12px] text-ink-muted">
           {item.brewed_at}
         </span>
-      </Link>
+      </div>
 
       {/* 사진 (필터 없음) */}
       <PhotoCarousel images={item.images} />

@@ -95,6 +95,7 @@ export async function GET(request: Request) {
       tea_name: tea?.tea_name ?? null,
       tea_category: tea?.tea_category ?? null,
       author: tea ? (nameById.get(tea.user_id) ?? null) : null,
+      author_id: tea?.user_id ?? null,
       brewed_at: l.brewed_at,
       images,
       water_temperature: l.water_temperature,

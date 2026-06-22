@@ -51,6 +51,7 @@ export interface FeedItem {
   tea_name: string | null;
   tea_category: TeaCategory | null;
   author: string | null;
+  author_id: string | null;
   brewed_at: string;
   images: string[];
   water_temperature: string | null;
@@ -97,6 +98,34 @@ export interface PublicLogDetail {
   author: string | null;
   liked_by_me: boolean;
   is_authed: boolean;
+}
+
+export interface ProfileItem {
+  id: string; // log id
+  tea_name: string | null;
+  tea_category: TeaCategory | null;
+  cover: string | null;
+  photo_count: number;
+  rating: number | null;
+  like_count: number;
+  comment_count: number;
+  created_at: string;
+}
+
+export interface UserProfile {
+  author: string | null;
+  items: ProfileItem[];
+  count: number;
+  is_me: boolean;
+  is_authed: boolean;
+}
+
+export function useUserProfile(id: string) {
+  return useQuery({
+    queryKey: ["user", id],
+    queryFn: () => fetchJson<UserProfile>(`/api/u/${id}`),
+    enabled: !!id,
+  });
 }
 
 export function usePublicLog(id: string) {

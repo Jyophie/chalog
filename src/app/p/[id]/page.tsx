@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Heart, Leaf, MessageCircle, Send, Trash2 } from "lucide-react";
 import {
@@ -241,9 +242,18 @@ export default function PublicLogPage() {
             {teaMeta && (
               <p className="mt-0.5 text-[12px] text-ink-muted">{teaMeta}</p>
             )}
-            <p className="mt-0.5 text-[12px] font-semibold text-brand">
-              by {author ?? "차 애호가"}
-            </p>
+            {tea?.user_id ? (
+              <Link
+                href={`/u/${tea.user_id}`}
+                className="mt-0.5 inline-block text-[12px] font-semibold text-brand"
+              >
+                by {author ?? "차 애호가"}
+              </Link>
+            ) : (
+              <p className="mt-0.5 text-[12px] font-semibold text-brand">
+                by {author ?? "차 애호가"}
+              </p>
+            )}
           </div>
         </div>
       </div>
