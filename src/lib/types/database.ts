@@ -34,6 +34,8 @@ export type BrewingToolEnum =
 
 export type ConfidenceLevel = "높음" | "중간" | "낮음";
 
+export type TeaVisibility = "private" | "public";
+
 export interface Database {
   public: {
     Tables: {
@@ -72,6 +74,9 @@ export interface Database {
           confidence_level: ConfidenceLevel | null;
           extracted_text: string | null;
           is_favorite: boolean;
+          visibility: TeaVisibility;
+          like_count: number;
+          comment_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -93,6 +98,9 @@ export interface Database {
           confidence_level?: ConfidenceLevel | null;
           extracted_text?: string | null;
           is_favorite?: boolean;
+          visibility?: TeaVisibility;
+          like_count?: number;
+          comment_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -148,6 +156,7 @@ export interface Database {
           astringency_level: number | null;
           rating: number | null;
           next_adjustment: string | null;
+          is_private: boolean;
           created_at: string;
         };
         Insert: {
@@ -156,6 +165,7 @@ export interface Database {
           user_id: string;
           brewed_at?: string;
           photo_url?: string | null;
+          is_private?: boolean;
           water_temperature?: string | null;
           tea_amount?: string | null;
           steeping_time?: string | null;
@@ -171,14 +181,54 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["tea_logs"]["Insert"]>;
         Relationships: [];
       };
+      likes: {
+        Row: {
+          id: string;
+          tea_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tea_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["likes"]["Insert"]>;
+        Relationships: [];
+      };
+      comments: {
+        Row: {
+          id: string;
+          tea_id: string;
+          user_id: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tea_id: string;
+          user_id: string;
+          body: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["comments"]["Insert"]>;
+        Relationships: [];
+      };
     };
-    Views: Record<never, never>;
+    Views: {
+      public_profiles: {
+        Row: { id: string; display_name: string | null };
+        Relationships: [];
+      };
+    };
     Functions: Record<never, never>;
     Enums: {
       tea_category: TeaCategory;
       leaf_shape: LeafShape;
       brewing_tool: BrewingToolEnum;
       confidence_level: ConfidenceLevel;
+      tea_visibility: TeaVisibility;
     };
   };
 }
