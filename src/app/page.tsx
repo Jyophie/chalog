@@ -17,9 +17,9 @@ export default async function Home() {
 
   return (
     <PhoneFrame>
-      <main className="flex flex-1 flex-col">
+      <main className="flex min-h-full flex-col pb-8">
         {/* 헤더 + 히어로 (Figma Container 1:29) */}
-        <div>
+        <div className="shrink-0">
           <div className="flex justify-center pt-14 pb-2">
             <Logo size="lg" />
           </div>
@@ -41,8 +41,8 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* 본문 (Figma Container 1:117) */}
-        <div className="flex flex-1 flex-col px-6 pt-6 pb-8">
+        {/* 안내 + 핵심 가치 카드 */}
+        <div className="shrink-0 px-6 pt-6">
           <p className="text-center text-[14px] text-ink-muted">
             AI가 분석하고, 나만의 티 아카이브로 쌓여요.
           </p>
@@ -61,11 +61,13 @@ export default async function Home() {
               </div>
             ))}
           </div>
+        </div>
 
-          {/* 남는 세로 공간을 흡수해 CTA를 하단으로 안정화 */}
-          <div className="min-h-6 flex-1" />
+        {/* 남는 세로 공간을 흡수해 CTA를 하단으로 안정화 */}
+        <div className="min-h-6 flex-1" />
 
-          {/* CTA — 비로그인 시 로그인/회원가입으로 */}
+        {/* CTA — 비로그인 시 로그인/회원가입으로 */}
+        <div className="shrink-0 px-6">
           <Link
             href={user ? "/upload" : "/login?next=/upload"}
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-pill bg-brand px-6 py-4 text-[16px] font-bold text-white shadow-brand transition-colors hover:bg-brand-dark"
