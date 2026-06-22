@@ -44,15 +44,17 @@ export function useTeas() {
   });
 }
 
-/* ── 커뮤니티: 피드 + 공개 차 상세 ──────────────────────────── */
+/* ── 커뮤니티: 공개 시음 기록 피드 + 좋아요/댓글 (기록 단위) ──── */
 
 export interface FeedItem {
-  id: string;
+  id: string; // log id
   tea_name: string | null;
   tea_category: TeaCategory | null;
-  origin: string | null;
-  image_url: string | null;
   author: string | null;
+  brewed_at: string;
+  taste_memo: string | null;
+  rating: number | null;
+  image_url: string | null;
   like_count: number;
   comment_count: number;
   liked_by_me: boolean;
@@ -72,25 +74,52 @@ export function useFeed() {
   });
 }
 
-/** 좋아요 토글 (낙관적 업데이트 — 피드 + 공개 상세 캐시 동시 갱신) */
-export function useToggleLike(id: string) {
+export interface PublicLogTea {
+  id: string;
+  tea_name: string | null;
+  tea_category: TeaCategory | null;
+  brand: string | null;
+  origin: string | null;
+  production_year: string | null;
+  image_url: string | null;
+  user_id: string;
+}
+
+export interface PublicLogDetail {
+  log: LogRow & { photo_url: string | null };
+  tea: PublicLogTea | null;
+  author: string | null;
+  liked_by_me: boolean;
+  is_authed: boolean;
+}
+
+export function usePublicLog(id: string) {
+  return useQuery({
+    queryKey: ["public-log", id],
+    queryFn: () => fetchJson<PublicLogDetail>(`/api/p/${id}`),
+    enabled: !!id,
+  });
+}
+
+/** 좋아요 토글 (낙관적 업데이트 — 피드 + 공개 기록 캐시 동시 갱신) */
+export function useToggleLike(logId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (liked: boolean) =>
-      fetchJson(`/api/teas/${id}/like`, { method: liked ? "DELETE" : "POST" }),
+      fetchJson(`/api/logs/${logId}/like`, { method: liked ? "DELETE" : "POST" }),
     onMutate: async (liked) => {
-      await qc.cancelQueries({ queryKey: ["public-tea", id] });
+      await qc.cancelQueries({ queryKey: ["public-log", logId] });
       await qc.cancelQueries({ queryKey: ["feed"] });
-      const prevPublic = qc.getQueryData<PublicTeaDetail>(["public-tea", id]);
+      const prevPublic = qc.getQueryData<PublicLogDetail>(["public-log", logId]);
       const prevFeed = qc.getQueryData<FeedResponse>(["feed"]);
       const delta = liked ? -1 : 1;
       if (prevPublic) {
-        qc.setQueryData<PublicTeaDetail>(["public-tea", id], {
+        qc.setQueryData<PublicLogDetail>(["public-log", logId], {
           ...prevPublic,
           liked_by_me: !liked,
-          tea: {
-            ...prevPublic.tea,
-            like_count: Math.max(0, prevPublic.tea.like_count + delta),
+          log: {
+            ...prevPublic.log,
+            like_count: Math.max(0, prevPublic.log.like_count + delta),
           },
         });
       }
@@ -98,7 +127,7 @@ export function useToggleLike(id: string) {
         qc.setQueryData<FeedResponse>(["feed"], {
           ...prevFeed,
           items: prevFeed.items.map((it) =>
-            it.id === id
+            it.id === logId
               ? {
                   ...it,
                   liked_by_me: !liked,
@@ -111,11 +140,29 @@ export function useToggleLike(id: string) {
       return { prevPublic, prevFeed };
     },
     onError: (_e, _v, ctx) => {
-      if (ctx?.prevPublic) qc.setQueryData(["public-tea", id], ctx.prevPublic);
+      if (ctx?.prevPublic)
+        qc.setQueryData(["public-log", logId], ctx.prevPublic);
       if (ctx?.prevFeed) qc.setQueryData(["feed"], ctx.prevFeed);
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: ["public-tea", id] });
+      qc.invalidateQueries({ queryKey: ["public-log", logId] });
+      qc.invalidateQueries({ queryKey: ["feed"] });
+    },
+  });
+}
+
+/** 기록 공개 여부 토글 (소유자, 차 상세에서 사용) */
+export function useToggleLogPublic(teaId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ logId, isPublic }: { logId: string; isPublic: boolean }) =>
+      fetchJson(`/api/logs/${logId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_public: isPublic }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tea", teaId] });
       qc.invalidateQueries({ queryKey: ["feed"] });
     },
   });
@@ -136,58 +183,43 @@ export interface CommentsResponse {
   is_authed: boolean;
 }
 
-export function useComments(id: string) {
+export function useComments(logId: string) {
   return useQuery({
-    queryKey: ["comments", id],
-    queryFn: () => fetchJson<CommentsResponse>(`/api/teas/${id}/comments`),
-    enabled: !!id,
+    queryKey: ["comments", logId],
+    queryFn: () => fetchJson<CommentsResponse>(`/api/logs/${logId}/comments`),
+    enabled: !!logId,
   });
 }
 
-export function useAddComment(id: string) {
+export function useAddComment(logId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: string) =>
-      fetchJson<{ id: string }>(`/api/teas/${id}/comments`, {
+      fetchJson<{ id: string }>(`/api/logs/${logId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body }),
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["comments", id] });
-      qc.invalidateQueries({ queryKey: ["public-tea", id] });
+      qc.invalidateQueries({ queryKey: ["comments", logId] });
+      qc.invalidateQueries({ queryKey: ["public-log", logId] });
       qc.invalidateQueries({ queryKey: ["feed"] });
     },
   });
 }
 
-export function useDeleteComment(id: string) {
+export function useDeleteComment(logId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (commentId: string) =>
-      fetchJson(`/api/teas/${id}/comments/${commentId}`, { method: "DELETE" }),
+      fetchJson(`/api/logs/${logId}/comments/${commentId}`, {
+        method: "DELETE",
+      }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["comments", id] });
-      qc.invalidateQueries({ queryKey: ["public-tea", id] });
+      qc.invalidateQueries({ queryKey: ["comments", logId] });
+      qc.invalidateQueries({ queryKey: ["public-log", logId] });
       qc.invalidateQueries({ queryKey: ["feed"] });
     },
-  });
-}
-
-export interface PublicTeaDetail {
-  tea: TeaRow & { image_url: string | null };
-  guide: GuideRow | null;
-  logs: LogRow[];
-  author: string | null;
-  liked_by_me: boolean;
-  is_authed: boolean;
-}
-
-export function usePublicTea(id: string) {
-  return useQuery({
-    queryKey: ["public-tea", id],
-    queryFn: () => fetchJson<PublicTeaDetail>(`/api/p/${id}`),
-    enabled: !!id,
   });
 }
 

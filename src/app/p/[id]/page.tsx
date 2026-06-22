@@ -2,16 +2,9 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, Heart, Leaf, MessageCircle, Send, Trash2 } from "lucide-react";
 import {
-  ArrowLeft,
-  Heart,
-  Leaf,
-  MessageCircle,
-  Send,
-  Trash2,
-} from "lucide-react";
-import {
-  usePublicTea,
+  usePublicLog,
   useToggleLike,
   useComments,
   useAddComment,
@@ -27,7 +20,7 @@ function LeafRating({ value }: { value: number }) {
         <Leaf
           key={n}
           className={cn(
-            "size-3",
+            "size-3.5",
             n <= value ? "fill-brand text-brand" : "text-ink-muted/30",
           )}
         />
@@ -36,7 +29,7 @@ function LeafRating({ value }: { value: number }) {
   );
 }
 
-function fmtDateTime(iso: string) {
+function fmtDate(iso: string) {
   const d = new Date(iso);
   return `${String(d.getMonth() + 1).padStart(2, "0")}.${String(
     d.getDate(),
@@ -44,13 +37,12 @@ function fmtDateTime(iso: string) {
 }
 
 /** 댓글 섹션 */
-function CommentsSection({ teaId }: { teaId: string }) {
+function CommentsSection({ logId }: { logId: string }) {
   const router = useRouter();
-  const { data } = useComments(teaId);
-  const add = useAddComment(teaId);
-  const del = useDeleteComment(teaId);
+  const { data } = useComments(logId);
+  const add = useAddComment(logId);
+  const del = useDeleteComment(logId);
   const [text, setText] = useState("");
-
   const comments = data?.comments ?? [];
 
   function submit() {
@@ -79,7 +71,7 @@ function CommentsSection({ teaId }: { teaId: string }) {
                     {c.author ?? "차 애호가"}
                   </span>
                   <span className="text-[11px] text-ink-muted">
-                    {fmtDateTime(c.created_at)}
+                    {fmtDate(c.created_at)}
                   </span>
                   {canDelete && (
                     <button
@@ -100,13 +92,10 @@ function CommentsSection({ teaId }: { teaId: string }) {
           );
         })}
         {comments.length === 0 && (
-          <li className="text-[13px] text-ink-muted">
-            첫 댓글을 남겨보세요.
-          </li>
+          <li className="text-[13px] text-ink-muted">첫 댓글을 남겨보세요.</li>
         )}
       </ul>
 
-      {/* 입력 */}
       {data?.is_authed ? (
         <div className="mt-4 flex items-center gap-2">
           <input
@@ -132,7 +121,7 @@ function CommentsSection({ teaId }: { teaId: string }) {
       ) : (
         <button
           type="button"
-          onClick={() => router.push(`/login?next=/p/${teaId}`)}
+          onClick={() => router.push(`/login?next=/p/${logId}`)}
           className="mt-4 w-full rounded-pill border border-hairline bg-field py-3 text-[14px] font-bold text-brand-ink"
         >
           로그인하고 댓글 남기기
@@ -142,11 +131,20 @@ function CommentsSection({ teaId }: { teaId: string }) {
   );
 }
 
-/** 공개 차 상세 (읽기 전용, 비로그인 포함) */
-export default function PublicTeaPage() {
+function Cond({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <span className="rounded-full bg-tint-green px-3 py-1 text-[12px] font-semibold text-mark">
+      {label} {value}
+    </span>
+  );
+}
+
+/** 공개 시음 기록 상세 (id = log id, 읽기 전용, 비로그인 포함) */
+export default function PublicLogPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  const { data, isLoading, isError } = usePublicTea(id);
+  const { data, isLoading, isError } = usePublicLog(id);
   const like = useToggleLike(id);
 
   if (isLoading) {
@@ -178,16 +176,13 @@ export default function PublicTeaPage() {
     );
   }
 
-  const { tea, logs, author } = data;
-  const rated = logs.filter((l) => l.rating != null);
-  const avg = rated.length
-    ? Math.round(rated.reduce((s, l) => s + (l.rating ?? 0), 0) / rated.length)
-    : 0;
-  const subtitle = [tea.origin, tea.production_year].filter(Boolean).join(" · ");
+  const { log, tea, author } = data;
+  const thumb = tea?.image_url ?? log.photo_url ?? null;
+  const teaMeta = [tea?.tea_category, tea?.origin].filter(Boolean).join(" · ");
 
   return (
     <PhoneFrame>
-      {/* 헤더 */}
+      {/* 헤더 — 차 맥락 */}
       <div className="border-b border-hairline px-6 pt-14 pb-6">
         <div className="flex items-center justify-between">
           <button
@@ -217,105 +212,93 @@ export default function PublicTeaPage() {
                   data.liked_by_me && "fill-[#d4714a] text-[#d4714a]",
                 )}
               />
-              {tea.like_count}
+              {log.like_count}
             </button>
             <span className="flex items-center gap-1">
               <MessageCircle className="size-4" />
-              {tea.comment_count}
+              {log.comment_count}
             </span>
           </div>
         </div>
 
-        <div className="mt-5 flex items-end gap-5">
-          <div className="size-24 shrink-0 overflow-hidden rounded-[24px] bg-tint-green shadow-[0px_4px_16px_rgba(30,60,35,0.1)]">
-            {tea.image_url ? (
+        <div className="mt-5 flex items-center gap-4">
+          <div className="size-16 shrink-0 overflow-hidden rounded-[20px] bg-tint-green">
+            {thumb ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={tea.image_url}
-                alt={tea.tea_name ?? "차"}
-                className="size-full object-cover"
-              />
+              <img src={thumb} alt="" className="size-full object-cover" />
             ) : (
               <div className="grid size-full place-items-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/decor/teacup.svg" alt="" className="size-12" />
+                <img src="/decor/teacup.svg" alt="" className="size-8" />
               </div>
             )}
           </div>
-          <div className="min-w-0 flex-1 pb-1">
-            <div className="flex flex-wrap gap-1.5">
-              {tea.tea_category && (
-                <span className="rounded-full bg-brand px-2.5 py-0.5 text-[12px] font-bold text-white">
-                  {tea.tea_category}
-                </span>
-              )}
-            </div>
-            <h1 className="mt-2 truncate text-[24px] font-black text-brand-ink">
-              {tea.tea_name || "이름 미정"}
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-[20px] font-black text-brand-ink">
+              {tea?.tea_name || "이름 미정"}
             </h1>
-            {subtitle && (
-              <p className="mt-0.5 text-[12px] text-ink-muted">{subtitle}</p>
+            {teaMeta && (
+              <p className="mt-0.5 text-[12px] text-ink-muted">{teaMeta}</p>
             )}
-            <p className="mt-1 text-[12px] font-semibold text-brand">
+            <p className="mt-0.5 text-[12px] font-semibold text-brand">
               by {author ?? "차 애호가"}
             </p>
-            {avg > 0 && (
-              <div className="mt-1.5">
-                <LeafRating value={avg} />
-              </div>
-            )}
           </div>
         </div>
       </div>
 
       <main className="flex flex-1 flex-col px-6 pt-5 pb-10">
-        <h2 className="text-[14px] font-black text-brand-ink">
-          시음 기록 {logs.length > 0 && `(${logs.length})`}
-        </h2>
-        {logs.length === 0 ? (
-          <div className="mt-3 rounded-[20px] border border-hairline bg-field p-6 text-center">
-            <p className="text-[13px] text-ink-muted">
-              아직 공개된 시음 기록이 없어요.
-            </p>
+        {/* 기록 본문 */}
+        <div className="rounded-[20px] border border-hairline bg-field p-5 shadow-[0px_2px_6px_rgba(30,60,35,0.05)]">
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-black text-brand-ink">
+              {log.brewed_at}
+            </span>
+            {log.rating != null && <LeafRating value={log.rating} />}
           </div>
-        ) : (
-          <ul className="mt-3 flex flex-col gap-2.5">
-              {logs.map((log) => (
-                <li
-                  key={log.id}
-                  className="rounded-[20px] border border-hairline bg-field p-4 shadow-[0px_2px_6px_rgba(30,60,35,0.05)]"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[14px] font-bold text-brand-ink">
-                      {log.brewed_at}
-                    </span>
-                    {log.rating != null && <LeafRating value={log.rating} />}
-                  </div>
-                  {log.photo_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={log.photo_url}
-                      alt="찻자리 사진"
-                      className="mt-2.5 aspect-video w-full rounded-[14px] object-cover"
-                    />
-                  )}
-                  {log.taste_memo && (
-                    <p className="mt-1.5 text-[13px] text-ink-muted">
-                      맛 · {log.taste_memo}
-                    </p>
-                  )}
-                  {log.aroma_memo && (
-                    <p className="text-[13px] text-ink-muted">
-                      향 · {log.aroma_memo}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-        )}
+
+          {log.photo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={log.photo_url}
+              alt="찻자리 사진"
+              className="mt-3 aspect-video w-full rounded-[14px] object-cover"
+            />
+          )}
+
+          {(log.water_temperature ||
+            log.steeping_time ||
+            log.tea_amount ||
+            log.tool) && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Cond label="🌡️" value={log.water_temperature} />
+              <Cond label="⏱️" value={log.steeping_time} />
+              <Cond label="🍃" value={log.tea_amount} />
+              <Cond label="🫖" value={log.tool} />
+            </div>
+          )}
+
+          {log.taste_memo && (
+            <p className="mt-3 text-[13px] leading-relaxed text-brand-ink">
+              <span className="font-bold text-ink-muted">맛 · </span>
+              {log.taste_memo}
+            </p>
+          )}
+          {log.aroma_memo && (
+            <p className="mt-1 text-[13px] leading-relaxed text-brand-ink">
+              <span className="font-bold text-ink-muted">향 · </span>
+              {log.aroma_memo}
+            </p>
+          )}
+          {log.next_adjustment && (
+            <p className="mt-2 text-[12px] font-semibold text-brand">
+              다음엔 · {log.next_adjustment}
+            </p>
+          )}
+        </div>
 
         {/* 댓글 */}
-        <CommentsSection teaId={id} />
+        <CommentsSection logId={id} />
       </main>
     </PhoneFrame>
   );

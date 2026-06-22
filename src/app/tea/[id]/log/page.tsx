@@ -172,6 +172,7 @@ export default function LogPage() {
   const [astringe, setAstringe] = useState<number>();
   const [rating, setRating] = useState<number>();
   const [adjust, setAdjust] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -214,6 +215,7 @@ export default function LogPage() {
       astringency_level: astringe,
       rating,
       next_adjustment: adjust || undefined,
+      is_public: isPublic,
     });
     if (!payload.success) {
       setError("입력값을 확인해주세요.");
@@ -412,6 +414,44 @@ export default function LogPage() {
             onChange={(e) => setAdjust(e.target.value)}
             placeholder="예: 온도 낮추기, 시간 10초 줄이기"
           />
+        </div>
+
+        {/* 피드 공개 */}
+        <div className="mt-6 rounded-[16px] border border-hairline bg-field p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[14px] font-bold text-brand-ink">
+                피드에 공개
+              </p>
+              <p className="mt-0.5 text-[12px] text-ink-muted">
+                이 기록을 다른 사람들과 나눠요
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isPublic}
+              aria-label="피드 공개"
+              onClick={() => setIsPublic((v) => !v)}
+              className={cn(
+                "relative h-7 w-12 shrink-0 rounded-full transition-colors",
+                isPublic ? "bg-brand" : "bg-track",
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute top-1 size-5 rounded-full bg-white shadow transition-all",
+                  isPublic ? "left-6" : "left-1",
+                )}
+              />
+            </button>
+          </div>
+          {isPublic && (
+            <p className="mt-2.5 rounded-[10px] bg-tint-cream/70 px-3 py-2 text-[11px] leading-relaxed text-[#8b6e52]">
+              공개하면 사진·맛/향 메모·평점이 피드에 노출돼요. 개인정보가 없는지
+              확인해주세요.
+            </p>
+          )}
         </div>
 
         {error && <p className="mt-4 text-[13px] text-red-500">{error}</p>}

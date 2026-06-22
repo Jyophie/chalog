@@ -2,27 +2,32 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-/** GET /api/teas/[id]/comments — 공개 차 댓글 목록 (비로그인 포함) */
+/** GET /api/logs/[logId]/comments — 공개 기록 댓글 목록 (비로그인 포함) */
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ logId: string }> },
 ) {
-  const { id } = await params;
+  const { logId } = await params;
   const admin = createAdminClient();
 
-  const { data: tea } = await admin
-    .from("teas")
-    .select("user_id, visibility")
-    .eq("id", id)
+  const { data: log } = await admin
+    .from("tea_logs")
+    .select("id, is_public, tea_id")
+    .eq("id", logId)
     .maybeSingle();
-  if (!tea || tea.visibility !== "public") {
+  if (!log || !log.is_public) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
+  const { data: tea } = await admin
+    .from("teas")
+    .select("user_id")
+    .eq("id", log.tea_id)
+    .maybeSingle();
 
   const { data: comments } = await admin
     .from("comments")
     .select("id, body, created_at, user_id")
-    .eq("tea_id", id)
+    .eq("log_id", logId)
     .order("created_at", { ascending: true });
 
   const ids = [...new Set((comments ?? []).map((c) => c.user_id))];
@@ -42,17 +47,17 @@ export async function GET(
       author: nameById.get(c.user_id) ?? null,
     })),
     me: user?.id ?? null,
-    is_owner: user ? tea.user_id === user.id : false,
+    is_owner: user ? tea?.user_id === user.id : false,
     is_authed: !!user,
   });
 }
 
-/** POST /api/teas/[id]/comments — 댓글 작성 */
+/** POST /api/logs/[logId]/comments — 댓글 작성 */
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ logId: string }> },
 ) {
-  const { id } = await params;
+  const { logId } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -71,7 +76,7 @@ export async function POST(
 
   const { data, error } = await supabase
     .from("comments")
-    .insert({ tea_id: id, user_id: user.id, body })
+    .insert({ log_id: logId, user_id: user.id, body })
     .select("id")
     .single();
   if (error || !data) {

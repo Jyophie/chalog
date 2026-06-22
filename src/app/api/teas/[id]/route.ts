@@ -93,10 +93,6 @@ export async function PATCH(
     drinking_style: patch.drinking_style,
     user_memo: patch.user_memo,
     is_favorite: patch.is_favorite,
-    visibility:
-      patch.visibility === "public" || patch.visibility === "private"
-        ? patch.visibility
-        : undefined,
   };
   Object.keys(allowed).forEach(
     (k) =>

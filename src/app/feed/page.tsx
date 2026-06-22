@@ -2,11 +2,27 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Heart, MessageCircle } from "lucide-react";
+import { Heart, Leaf, MessageCircle } from "lucide-react";
 import { useFeed, useToggleLike, type FeedItem } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { cn } from "@/lib/utils";
+
+function LeafRating({ value }: { value: number }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Leaf
+          key={n}
+          className={cn(
+            "size-3",
+            n <= value ? "fill-brand text-brand" : "text-ink-muted/30",
+          )}
+        />
+      ))}
+    </div>
+  );
+}
 
 function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
   const router = useRouter();
@@ -59,7 +75,23 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-4 px-4 py-2.5">
+
+      {/* 기록 내용 */}
+      <div className="px-4 pt-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[12px] font-semibold text-ink-muted">
+            {item.brewed_at}
+          </span>
+          {item.rating != null && <LeafRating value={item.rating} />}
+        </div>
+        {item.taste_memo && (
+          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-brand-ink">
+            {item.taste_memo}
+          </p>
+        )}
+      </div>
+
+      <div className="flex items-center gap-4 px-4 pb-3 pt-2.5">
         <button
           type="button"
           aria-label="좋아요"

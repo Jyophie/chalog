@@ -87,6 +87,7 @@ export type BrewingGuide = z.infer<typeof brewingGuideSchema>;
 export const teaLogSchema = z.object({
   brewed_at: z.string(),
   photo_url: z.string().optional(), // Storage 경로 (읽을 때 signed URL로 변환)
+  is_public: z.boolean().optional(), // 피드 공개 여부
   water_temperature: z.string().optional(),
   tea_amount: z.string().optional(),
   steeping_time: z.string().optional(),
