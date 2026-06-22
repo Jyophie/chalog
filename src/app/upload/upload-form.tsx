@@ -7,6 +7,7 @@ import { useScanFlow } from "@/store/scan-flow";
 import { uploadTeaImage, UploadError } from "@/lib/storage";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { TabHeader } from "@/components/layout/tab-header";
 
 const TIPS = [
   "패키지 앞면이 잘 보이도록 찍어요",
@@ -63,12 +64,7 @@ export function UploadForm() {
   return (
     <PhoneFrame scroll={false}>
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <header className="px-6 pt-14 pb-2">
-          <h1 className="text-[24px] font-black text-brand-ink">차 등록</h1>
-          <p className="mt-0.5 text-[14px] text-ink-muted">
-            차 사진을 올리면 AI가 분석해드려요
-          </p>
-        </header>
+        <TabHeader title="차 등록" subtitle="사진으로 AI 분석" />
 
         <main className="min-h-0 flex-1 overflow-y-auto px-6 pb-28 pt-2">
         {/* 안내 배너 */}

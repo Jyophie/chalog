@@ -7,6 +7,7 @@ import { useTeas, useToggleFavorite, type TeaListItem } from "@/hooks/use-teas";
 import { TEA_CATEGORIES } from "@/lib/schemas/tea";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { TabHeader } from "@/components/layout/tab-header";
 import { Chip } from "@/components/ui/chip";
 import { cn } from "@/lib/utils";
 
@@ -143,27 +144,24 @@ export default function ArchivePage() {
     <PhoneFrame scroll={false}>
       <div className="relative flex min-h-0 flex-1 flex-col">
         {/* 헤더 (고정) */}
-        <header className="px-6 pt-14 pb-2">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-[24px] font-black text-brand-ink">
-                내 티 아카이브
-              </h1>
-              <p className="mt-0.5 text-[14px] text-ink-muted">
-                {teas ? `${teas.length}종 수집 중` : "불러오는 중"} · 오늘도 한 잔 🍵
-              </p>
-            </div>
-            <Link
-              href="/upload"
-              aria-label="차 등록"
-              className="grid size-12 shrink-0 place-items-center rounded-full bg-brand text-white shadow-[0px_4px_8px_rgba(74,124,89,0.31)] transition-colors hover:bg-brand-dark"
-            >
-              <Plus className="size-5" />
-            </Link>
-          </div>
+        <div className="shrink-0">
+          <TabHeader
+            title="아카이브"
+            subtitle={teas ? `${teas.length}종 수집 중` : undefined}
+            action={
+              <Link
+                href="/upload"
+                aria-label="차 등록"
+                className="grid size-10 shrink-0 place-items-center rounded-full bg-brand text-white shadow-[0px_4px_8px_rgba(74,124,89,0.31)] transition-colors hover:bg-brand-dark"
+              >
+                <Plus className="size-[18px]" />
+              </Link>
+            }
+          />
 
-          {/* 검색 */}
-          <div className="relative mt-4">
+          <div className="px-6 pb-2">
+            {/* 검색 */}
+            <div className="relative">
             <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink-muted" />
             <input
               value={query}
@@ -199,7 +197,8 @@ export default function ArchivePage() {
               </Chip>
             ))}
           </div>
-        </header>
+          </div>
+        </div>
 
         {/* 목록 (스크롤) */}
         <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-28 pt-3">

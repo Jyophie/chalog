@@ -7,6 +7,7 @@ import { Heart, Leaf, MessageCircle } from "lucide-react";
 import { useFeed, useToggleLike, type FeedItem } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { TabHeader } from "@/components/layout/tab-header";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { cn } from "@/lib/utils";
 
@@ -184,12 +185,7 @@ export default function FeedPage() {
   return (
     <PhoneFrame scroll={false}>
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <header className="px-6 pt-14 pb-3">
-          <h1 className="text-[24px] font-black text-brand-ink">피드</h1>
-          <p className="mt-0.5 text-[14px] text-ink-muted">
-            다른 사람들의 차 기록을 둘러봐요 🍃
-          </p>
-        </header>
+        <TabHeader title="피드" subtitle="다른 사람들의 차 기록" />
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-28 pt-1">
           {isLoading && (

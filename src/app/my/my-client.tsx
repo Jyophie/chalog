@@ -13,6 +13,7 @@ import { signOut } from "@/app/login/actions";
 import { updateProfile, deleteAccount, type ProfileState } from "./actions";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { TabHeader } from "@/components/layout/tab-header";
 
 function fmtDate(iso: string | null) {
   if (!iso) return "";
@@ -50,9 +51,7 @@ export function MyClient({
   return (
     <PhoneFrame scroll={false}>
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <header className="px-6 pt-14 pb-2">
-          <h1 className="text-[24px] font-black text-brand-ink">내 정보</h1>
-        </header>
+        <TabHeader title="내 정보" subtitle="프로필 · 설정" />
 
         <main className="min-h-0 flex-1 overflow-y-auto px-6 pb-28 pt-2">
         {/* 프로필 카드 */}
