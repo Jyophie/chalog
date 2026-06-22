@@ -14,7 +14,16 @@
   /* surfaces */
   --color-surface: #ffffff;
   --color-bg: #f4f7f2;
+  --color-paper: #f5f1e8; /* 앱 화면 배경 (Figma MobileShell) */
+  --color-field: #fdfaf3; /* 입력 필드 / 활성 탭 / Google 버튼 */
+  --color-track: #ede9e0; /* 탭 트랙 / 아이콘 버튼 배경 */
+  --color-kakao: #fee500;
   --color-border: #e2e8e0;
+  --color-hairline: #3c64461f; /* rgba(60,100,70,0.12) 구분선/필드 보더 */
+  --color-mark: #2d5a3d; /* ChalogMark 딥그린 */
+
+  /* 랜딩 바깥 그라데이션 배경 (Figma App) */
+  --gradient-app: linear-gradient(156deg, #c8d8ca 6%, #8fad94 94%);
 
   /* feature / accent tints */
   --color-tint-green: #e8f2ea;
@@ -33,11 +42,36 @@
     sans-serif;
   --font-display: var(--font-nunito), var(--font-noto-kr), ui-sans-serif,
     system-ui, sans-serif;
+  --font-wordmark: var(--font-playfair), Georgia, "Times New Roman", serif;
 }
 
 :root {
   --background: var(--color-bg);
   --foreground: var(--color-brand-ink);
+}
+
+/* 분석 화면: 다호가 천천히 둥둥 떠올랐다 내려오는 모션 */
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(6px);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+/* 분석 화면: 뒤 원형 배경이 커졌다 줄어드는 호흡 모션 */
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
 }
 
 body {

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito, Noto_Sans_KR } from "next/font/google";
+import { Nunito, Noto_Sans_KR, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
@@ -13,7 +13,15 @@ const nunito = Nunito({
 const notoKr = Noto_Sans_KR({
   variable: "--font-noto-kr",
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "700", "900"],
+  display: "swap",
+});
+
+/** chalog 워드마크 전용 세리프 (Figma: Playfair Display) */
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["700", "800"],
   display: "swap",
 });
 
@@ -37,7 +45,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${nunito.variable} ${notoKr.variable} h-full antialiased`}
+      className={`${nunito.variable} ${notoKr.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <Providers>{children}</Providers>

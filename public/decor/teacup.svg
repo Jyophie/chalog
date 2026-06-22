@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 34 32.6328" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="IcoTeacup" clip-path="url(#clip0_0_42)">
+<path id="Vector" d="M2.64157 9.13718C2.20646 6.09146 6.99261 4.56859 17 4.56859C27.0074 4.56859 31.7935 6.09146 31.3584 9.13718L29.4005 28.0642C28.5303 31.1099 24.3968 32.6328 17 32.6328C9.60323 32.6328 5.46974 31.1099 4.59954 28.0642L2.64157 9.13718Z" fill="var(--fill-0, #2C3820)"/>
+<path id="Vector_2" opacity="0.92" d="M17 13.0531C24.5695 13.0531 30.7058 11.0077 30.7058 8.48453C30.7058 5.96136 24.5695 3.91594 17 3.91594C9.43051 3.91594 3.29422 5.96136 3.29422 8.48453C3.29422 11.0077 9.43051 13.0531 17 13.0531Z" fill="var(--fill-0, white)"/>
+</g>
+<defs>
+<clipPath id="clip0_0_42">
+<rect width="34" height="32.6328" fill="white"/>
+</clipPath>
+</defs>
+</svg>

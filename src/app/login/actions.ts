@@ -12,6 +12,8 @@ function safeNext(next: FormDataEntryValue | null): string {
   return n.startsWith("/") ? n : "/upload";
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function signIn(
   _prev: AuthState,
   formData: FormData,
@@ -34,20 +36,29 @@ export async function signUp(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
   const next = safeNext(formData.get("next"));
 
-  if (!email || !password) return { error: "이메일과 비밀번호를 입력해주세요." };
-  if (password.length < 6)
-    return { error: "비밀번호는 6자 이상이어야 해요." };
+  if (!name || !email || !password)
+    return { error: "닉네임, 이메일, 비밀번호를 모두 입력해주세요." };
+  if (name.length < 2) return { error: "닉네임은 2자 이상이어야 해요." };
+  if (!EMAIL_RE.test(email)) return { error: "이메일 형식을 확인해주세요." };
+  if (password.length < 6) return { error: "비밀번호는 6자 이상이어야 해요." };
+  if (password !== passwordConfirm)
+    return { error: "비밀번호가 일치하지 않아요." };
 
   const origin = (await headers()).get("origin") ?? "";
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${origin}/auth/callback?next=${next}` },
+    options: {
+      data: { name }, // → handle_new_user 트리거가 users.display_name 으로 저장
+      emailRedirectTo: `${origin}/auth/callback?next=${next}`,
+    },
   });
   if (error) return { error: error.message };
 

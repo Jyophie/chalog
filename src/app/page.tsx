@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { PhoneFrame } from "@/components/layout/phone-frame";
 import { createClient } from "@/lib/supabase/server";
 
 const FEATURES = [
@@ -17,62 +16,87 @@ export default async function Home() {
   } = await supabase.auth.getUser();
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[420px] flex-col px-6 pb-10 pt-8">
-      {/* 로고 */}
-      <div className="flex justify-center">
-        <Logo size="md" />
-      </div>
-
-      {/* 히어로 (Figma HeroPoster 단순화 버전) */}
-      <div className="relative mt-6 flex h-56 items-center justify-center overflow-hidden rounded-[24px] bg-gradient-to-br from-tint-green via-tint-cream to-tint-beige">
-        <span className="text-7xl drop-shadow-sm">🍵</span>
-        <span className="absolute left-6 top-6 text-2xl">🌿</span>
-        <span className="absolute right-7 top-8 text-2xl">🍃</span>
-        <span className="absolute bottom-7 left-9 text-2xl">💧</span>
-        <span className="absolute bottom-6 right-8 text-2xl">🫖</span>
-      </div>
-
-      {/* 헤드라인 */}
-      <h1 className="mt-8 text-center font-display text-2xl font-black leading-snug text-brand-ink">
-        차 이름을 몰라도 괜찮아요.
-        <br />
-        <span className="text-brand">사진 한 장으로 시작해요</span>
-      </h1>
-      <p className="mt-3 text-center text-sm text-ink-muted">
-        AI가 분석하고, 나만의 티 아카이브로 쌓여요.
-      </p>
-
-      {/* 핵심 가치 카드 */}
-      <div className="mt-6 flex flex-col gap-2.5">
-        {FEATURES.map((f) => (
-          <div
-            key={f.label}
-            className={`flex items-center gap-3 rounded-card ${f.bg} px-4 py-3`}
-          >
-            <span className="text-xl">{f.icon}</span>
-            <span className="text-sm font-semibold text-brand-ink">
-              {f.label}
-            </span>
+    <PhoneFrame>
+      <main className="flex flex-1 flex-col">
+        {/* 헤더 + 히어로 (Figma Container 1:29) */}
+        <div>
+          <div className="flex justify-center pt-14 pb-2">
+            <Logo size="lg" />
           </div>
-        ))}
-      </div>
+          {/* 히어로 이미지 + 굵은 헤드라인 두 줄만 오버레이 */}
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/landing/hero.png"
+              alt="찻주전자와 찻잎 일러스트"
+              className="block w-full"
+              width={390}
+              height={308}
+            />
+            <h1 className="absolute inset-x-0 bottom-[19%] px-6 text-center font-display text-[23px] font-black leading-[1.375] text-brand-ink">
+              차 이름을 몰라도 괜찮아요.
+              <br />
+              <span className="text-brand">사진 한 장으로 시작해요</span>
+            </h1>
+          </div>
+        </div>
 
-      {/* CTA */}
-      <div className="mt-8 flex flex-col items-center gap-3">
-        <Link
-          href="/upload"
-          className={cn(buttonVariants({ size: "lg", block: true }))}
-        >
-          차 사진 등록하기
-        </Link>
-        {user ? (
-          <Link href="/archive" className="text-sm font-semibold text-brand">
-            내 차 보관함 보기 →
+        {/* 본문 (Figma Container 1:117) */}
+        <div className="flex flex-1 flex-col px-6 pt-6 pb-10">
+          <p className="text-center text-[14px] text-ink-muted">
+            AI가 분석하고, 나만의 티 아카이브로 쌓여요.
+          </p>
+
+          {/* 핵심 가치 카드 */}
+          <div className="mt-6 flex flex-col gap-2.5">
+            {FEATURES.map((f) => (
+              <div
+                key={f.label}
+                className={`flex items-center gap-3 rounded-card ${f.bg} px-4 py-3`}
+              >
+                <span className="text-[20px] leading-none">{f.icon}</span>
+                <span className="text-[14px] font-semibold text-brand-ink">
+                  {f.label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <Link
+            href="/upload"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-pill bg-brand px-6 py-4 text-[16px] font-bold text-white shadow-brand transition-colors hover:bg-brand-dark"
+          >
+            차 사진 등록하기
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
           </Link>
-        ) : (
-          <p className="text-xs text-ink-muted">무료로 시작할 수 있어요 ✨</p>
-        )}
-      </div>
-    </main>
+
+          {user ? (
+            <Link
+              href="/archive"
+              className="mt-3 text-center text-[13px] font-semibold text-brand"
+            >
+              내 차 보관함 보기 →
+            </Link>
+          ) : (
+            <p className="mt-3 text-center text-[12px] text-ink-muted">
+              무료로 시작할 수 있어요 ✨
+            </p>
+          )}
+        </div>
+      </main>
+    </PhoneFrame>
   );
 }

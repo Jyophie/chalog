@@ -43,10 +43,21 @@ export async function GET(
     imageUrl = signed?.signedUrl ?? null;
   }
 
+  // 기록 사진도 signed URL로
+  const signedLogs = await Promise.all(
+    (logs ?? []).map(async (log) => {
+      if (!log.photo_url) return log;
+      const { data: s } = await supabase.storage
+        .from("tea-images")
+        .createSignedUrl(log.photo_url, 3600);
+      return { ...log, photo_url: s?.signedUrl ?? null };
+    }),
+  );
+
   return NextResponse.json({
     tea: { ...tea, image_url: imageUrl, image_path: tea.image_url },
     guide: guide ?? null,
-    logs: logs ?? [],
+    logs: signedLogs,
   });
 }
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { useScanFlow } from "@/store/scan-flow";
 import { TEA_CATEGORIES, LEAF_SHAPES, BREWING_TOOLS } from "@/lib/schemas/tea";
 import type {
@@ -9,25 +10,67 @@ import type {
   LeafShape,
   BrewingToolEnum,
 } from "@/lib/types/database";
+import { PhoneFrame } from "@/components/layout/phone-frame";
 import { TopBar } from "@/components/layout/top-bar";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Chip } from "@/components/ui/chip";
+
+const DRINKING_STYLES = ["따뜻하게", "아이스로", "진하게", "연하게", "라떼로"];
+const COMPRESSED_OPTIONS = ["예", "아니오", "모르겠음"] as const;
+type Compressed = (typeof COMPRESSED_OPTIONS)[number];
+
+/** 그룹별 선택 색 */
+const TONE = {
+  brand: undefined, // 기본 브랜드 그린
+  brown:
+    "border-[#8b6e52] bg-[#8b6e52] text-white shadow-[0px_2px_5px_rgba(139,110,82,0.19)]",
+  deep: "border-mark bg-mark text-white shadow-[0px_2px_5px_rgba(45,90,61,0.19)]",
+  terracotta:
+    "border-[#d4714a] bg-[#d4714a] text-white shadow-[0px_2px_5px_rgba(212,113,74,0.19)]",
+} as const;
+
+function FieldLabel({
+  children,
+  required,
+  optional,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+  optional?: boolean;
+}) {
+  return (
+    <p className="mb-2.5 text-[14px] font-bold text-brand-ink">
+      {children}
+      {required && <span className="ml-1 text-[11px] text-[#d4714a]">필수</span>}
+      {optional && (
+        <span className="ml-1 text-[14px] font-normal text-ink-muted">
+          (선택)
+        </span>
+      )}
+    </p>
+  );
+}
 
 function ChipGroup<T extends string>({
   options,
   value,
   onChange,
+  activeClassName,
 }: {
   options: readonly T[];
   value?: T;
   onChange: (v: T) => void;
+  activeClassName?: string;
 }) {
   return (
     <div className="flex flex-wrap gap-2">
       {options.map((o) => (
-        <Chip key={o} selected={value === o} onClick={() => onChange(o)}>
+        <Chip
+          key={o}
+          selected={value === o}
+          activeClassName={activeClassName}
+          onClick={() => onChange(o)}
+        >
           {o}
         </Chip>
       ))}
@@ -35,7 +78,7 @@ function ChipGroup<T extends string>({
   );
 }
 
-/** ⑥ 추가 정보 입력 / 보정 */
+/** ⑥ 정보 확인 · 수정 */
 export default function CorrectionPage() {
   const router = useRouter();
   const { analysisResult, setCorrectionForm } = useScanFlow();
@@ -46,9 +89,9 @@ export default function CorrectionPage() {
   const [year, setYear] = useState("");
   const [category, setCategory] = useState<TeaCategory>();
   const [leaf, setLeaf] = useState<LeafShape>();
+  const [compressed, setCompressed] = useState<Compressed>();
   const [tool, setTool] = useState<BrewingToolEnum>();
-  const [compressed, setCompressed] = useState(false);
-  const [style, setStyle] = useState("");
+  const [style, setStyle] = useState<string>();
   const [memo, setMemo] = useState("");
 
   // 분석 결과로 프리필
@@ -64,7 +107,7 @@ export default function CorrectionPage() {
     if (analysisResult.tea_category) setCategory(analysisResult.tea_category);
   }, [analysisResult, router]);
 
-  const canSubmit = category && leaf && tool;
+  const canSubmit = category && tool;
 
   function onSubmit() {
     if (!canSubmit) return;
@@ -76,7 +119,7 @@ export default function CorrectionPage() {
       tea_category: category,
       leaf_shape: leaf,
       brewing_tool: tool,
-      is_compressed: compressed,
+      is_compressed: compressed === "예",
       drinking_style: style || undefined,
       user_memo: memo || undefined,
     });
@@ -84,81 +127,128 @@ export default function CorrectionPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[420px] flex-col">
-      <TopBar title="정보 보정" />
-      <main className="flex flex-1 flex-col gap-6 px-6 pb-8">
-        <p className="text-sm text-ink-muted">
-          AI가 추정한 정보를 확인하고, 아는 만큼만 채워주세요. 모르면 “잘 모르겠음”도 괜찮아요.
+    <PhoneFrame>
+      <TopBar title="정보 확인 · 수정" onBack={() => router.push("/result")} />
+
+      <main className="flex flex-1 flex-col px-6 pt-2 pb-10">
+        <p className="text-[14px] leading-[1.5] text-ink-muted">
+          AI 분석 결과를 바탕으로 미리 채웠어요. 틀린 곳이 있으면 수정해주세요!
         </p>
 
         {/* 기본 정보 */}
-        <div className="space-y-3">
+        <div className="mt-5 flex flex-col gap-4">
           <div>
-            <Label htmlFor="tn">차 이름</Label>
-            <Input id="tn" value={teaName} onChange={(e) => setTeaName(e.target.value)} placeholder="예: 동방미인" />
+            <FieldLabel>차 이름</FieldLabel>
+            <Input
+              value={teaName}
+              onChange={(e) => setTeaName(e.target.value)}
+              placeholder="예: 동방미인"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="br">브랜드</Label>
-              <Input id="br" value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="선택" />
+              <FieldLabel>브랜드</FieldLabel>
+              <Input
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                placeholder="선택"
+              />
             </div>
             <div>
-              <Label htmlFor="yr">생산연도</Label>
-              <Input id="yr" value={year} onChange={(e) => setYear(e.target.value)} placeholder="선택" />
+              <FieldLabel>생산연도</FieldLabel>
+              <Input
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                placeholder="예: 2024"
+              />
             </div>
           </div>
           <div>
-            <Label htmlFor="or">산지</Label>
-            <Input id="or" value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="선택" />
+            <FieldLabel>산지</FieldLabel>
+            <Input
+              value={origin}
+              onChange={(e) => setOrigin(e.target.value)}
+              placeholder="선택"
+            />
           </div>
         </div>
 
-        <div>
-          <Label>차 종류 *</Label>
-          <ChipGroup options={TEA_CATEGORIES} value={category} onChange={setCategory} />
-        </div>
-
-        <div>
-          <Label>찻잎 형태 *</Label>
-          <ChipGroup options={LEAF_SHAPES} value={leaf} onChange={setLeaf} />
-        </div>
-
-        <label className="flex items-center justify-between rounded-card border border-border bg-surface px-4 py-3">
-          <span className="text-sm font-semibold text-brand-ink">압축차예요</span>
-          <input
-            type="checkbox"
-            checked={compressed}
-            onChange={(e) => setCompressed(e.target.checked)}
-            className="size-5 accent-[var(--color-brand)]"
+        {/* 차 종류 (필수) */}
+        <div className="mt-6">
+          <FieldLabel required>차 종류 </FieldLabel>
+          <ChipGroup
+            options={TEA_CATEGORIES}
+            value={category}
+            onChange={setCategory}
           />
-        </label>
-
-        <div>
-          <Label>사용 도구 *</Label>
-          <ChipGroup options={BREWING_TOOLS} value={tool} onChange={setTool} />
         </div>
 
-        <div>
-          <Label htmlFor="st">원하는 음용 방식 (선택)</Label>
-          <Input id="st" value={style} onChange={(e) => setStyle(e.target.value)} placeholder="예: 진하게 / 연하게" />
+        {/* 찻잎 형태 */}
+        <div className="mt-6">
+          <FieldLabel>찻잎 형태</FieldLabel>
+          <ChipGroup
+            options={LEAF_SHAPES}
+            value={leaf}
+            onChange={setLeaf}
+            activeClassName={TONE.brown}
+          />
         </div>
 
-        <div>
-          <Label htmlFor="mm">메모 (선택)</Label>
+        {/* 압축차 여부 */}
+        <div className="mt-6">
+          <FieldLabel>압축차 여부</FieldLabel>
+          <ChipGroup
+            options={COMPRESSED_OPTIONS}
+            value={compressed}
+            onChange={setCompressed}
+          />
+        </div>
+
+        {/* 사용 도구 (필수) */}
+        <div className="mt-6">
+          <FieldLabel required>사용 도구 </FieldLabel>
+          <ChipGroup
+            options={BREWING_TOOLS}
+            value={tool}
+            onChange={setTool}
+            activeClassName={TONE.deep}
+          />
+        </div>
+
+        {/* 음용 방식 */}
+        <div className="mt-6">
+          <FieldLabel>음용 방식</FieldLabel>
+          <ChipGroup
+            options={DRINKING_STYLES}
+            value={style}
+            onChange={(v) => setStyle(style === v ? undefined : v)}
+            activeClassName={TONE.terracotta}
+          />
+        </div>
+
+        {/* 추가 메모 */}
+        <div className="mt-6">
+          <FieldLabel optional>추가 메모 </FieldLabel>
           <textarea
-            id="mm"
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
             rows={3}
-            placeholder="추가로 알려주고 싶은 정보가 있나요?"
-            className="w-full rounded-[14px] border border-border bg-surface px-4 py-3 text-sm text-brand-ink outline-none placeholder:text-ink-muted/60 focus:border-brand"
+            placeholder="AI에게 전달하고 싶은 내용이 있으면 적어주세요"
+            className="w-full rounded-[16px] border border-hairline bg-field px-[17px] py-[13px] text-[14px] text-brand-ink outline-none transition-colors placeholder:text-[#1e2b2080] focus:border-brand"
           />
         </div>
 
-        <Button size="lg" block disabled={!canSubmit} onClick={onSubmit}>
-          가이드 생성하기
-        </Button>
+        {/* CTA */}
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!canSubmit}
+          className="mt-7 flex w-full items-center justify-center gap-2 rounded-pill bg-brand px-6 py-4 text-[16px] font-bold text-white shadow-brand transition-colors hover:bg-brand-dark disabled:opacity-50"
+        >
+          우리는 가이드 생성하기
+          <ArrowRight className="size-[18px]" />
+        </button>
       </main>
-    </div>
+    </PhoneFrame>
   );
 }

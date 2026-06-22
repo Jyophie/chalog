@@ -29,6 +29,11 @@ export async function POST(
     );
   }
 
+  // 사진 경로는 본인 폴더만 허용
+  if (parsed.data.photo_url && !parsed.data.photo_url.startsWith(`${user.id}/`)) {
+    return NextResponse.json({ error: "invalid photo" }, { status: 400 });
+  }
+
   // 차 소유 확인 (RLS가 막지만 명확한 에러 위해)
   const { data: owned } = await supabase
     .from("teas")
