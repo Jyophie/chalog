@@ -13,9 +13,11 @@ export async function GET() {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
+  // 아카이브는 "내 차"만 — 공개 RLS 정책이 추가된 뒤로 user_id 필터 필수
   const { data, error } = await supabase
     .from("teas")
     .select("id, tea_name, tea_category, image_url, is_favorite, created_at")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
