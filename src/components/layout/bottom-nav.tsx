@@ -12,40 +12,28 @@ const TABS: { key: Tab; href: string; label: string; icon: typeof Newspaper }[] 
     { key: "my", href: "/my", label: "내 정보", icon: UserRound },
   ];
 
-/** 메인 하단 내비게이션 (PhoneFrame scroll={false} 안에서 absolute 오버레이) */
+/** 메인 하단 내비게이션 — 미니멀, 색상만으로 활성 표시 */
 export function BottomNav({ active }: { active: Tab }) {
   return (
-    <nav className="pointer-events-none absolute inset-x-0 bottom-0 px-4 pb-4">
-      <div className="pointer-events-auto flex items-center justify-around rounded-[24px] border border-hairline bg-field py-3 shadow-[0px_-2px_10px_rgba(30,60,35,0.09)]">
+    <nav className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-3">
+      <div className="pointer-events-auto flex items-center justify-around rounded-[20px] border border-hairline bg-field/95 py-2 shadow-[0px_-2px_10px_rgba(30,60,35,0.07)] backdrop-blur-sm">
         {TABS.map(({ key, href, label, icon: Icon }) => {
           const on = key === active;
-          const isUpload = key === "upload";
           return (
             <Link
               key={key}
               href={href}
-              className="flex flex-col items-center gap-1"
+              className="flex flex-1 flex-col items-center gap-0.5 py-1"
             >
-              <span
+              <Icon
                 className={cn(
-                  "grid size-10 place-items-center rounded-[16px]",
-                  isUpload ? "bg-brand" : on ? "bg-tint-green" : "bg-transparent",
+                  "size-[19px]",
+                  on ? "text-brand" : "text-ink-muted",
                 )}
-              >
-                <Icon
-                  className={cn(
-                    "size-5",
-                    isUpload
-                      ? "text-white"
-                      : on
-                        ? "text-brand"
-                        : "text-ink-muted",
-                  )}
-                />
-              </span>
+              />
               <span
                 className={cn(
-                  "text-[12px]",
+                  "text-[10px]",
                   on ? "font-bold text-brand" : "text-ink-muted",
                 )}
               >
