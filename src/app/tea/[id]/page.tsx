@@ -319,6 +319,11 @@ export default function TeaDetailPage() {
                       </span>
                       {log.rating != null && <LeafRating value={log.rating} />}
                     </div>
+                    {log.next_adjustment && (
+                      <p className="mt-2 whitespace-pre-wrap text-[13px] leading-relaxed text-brand-ink">
+                        {log.next_adjustment}
+                      </p>
+                    )}
                     {log.photo_url && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -335,11 +340,6 @@ export default function TeaDetailPage() {
                     {log.aroma_memo && (
                       <p className="text-[13px] text-ink-muted">
                         향 · {log.aroma_memo}
-                      </p>
-                    )}
-                    {log.next_adjustment && (
-                      <p className="mt-1.5 text-[12px] font-semibold text-brand">
-                        다음엔 · {log.next_adjustment}
                       </p>
                     )}
 

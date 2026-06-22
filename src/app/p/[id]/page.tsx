@@ -264,6 +264,13 @@ export default function PublicLogPage() {
             </div>
           )}
 
+          {/* 노트 (주요 내용) */}
+          {log.next_adjustment && (
+            <p className="mt-3 whitespace-pre-wrap text-[14px] leading-relaxed text-brand-ink">
+              {log.next_adjustment}
+            </p>
+          )}
+
           {(log.water_temperature ||
             log.steeping_time ||
             log.tea_amount ||
@@ -286,11 +293,6 @@ export default function PublicLogPage() {
             <p className="mt-1 text-[13px] leading-relaxed text-brand-ink">
               <span className="font-bold text-ink-muted">향 · </span>
               {log.aroma_memo}
-            </p>
-          )}
-          {log.next_adjustment && (
-            <p className="mt-2 text-[12px] font-semibold text-brand">
-              다음엔 · {log.next_adjustment}
             </p>
           )}
         </div>

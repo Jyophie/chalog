@@ -40,14 +40,21 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
   const like = useToggleLike(item.id);
   const [expanded, setExpanded] = useState(false);
 
-  const hasDetails =
+  const note = item.next_adjustment;
+  const caption = note ?? item.taste_memo ?? "";
+  const showTasteInExpand = !!note && !!item.taste_memo;
+  const hasConditions = !!(
+    item.water_temperature ||
+    item.steeping_time ||
+    item.tea_amount ||
+    item.tool
+  );
+  const hasMore =
+    showTasteInExpand ||
     !!item.aroma_memo ||
-    !!item.water_temperature ||
-    !!item.steeping_time ||
-    !!item.tea_amount ||
-    !!item.tool ||
-    !!item.next_adjustment ||
-    (item.taste_memo?.length ?? 0) > 60;
+    hasConditions ||
+    caption.length > 28 ||
+    caption.includes("\n");
 
   return (
     <article className="overflow-hidden rounded-[20px] border border-hairline bg-field shadow-[0px_2px_12px_rgba(30,60,35,0.05)]">
@@ -74,64 +81,59 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
       <PhotoCarousel images={item.images} />
 
       {/* 액션 */}
-      <div className="flex items-center gap-4 px-4 pt-3">
-        <button
-          type="button"
-          aria-label="좋아요"
-          onClick={() => {
-            if (!isAuthed) {
-              router.push("/login?next=/feed");
-              return;
-            }
-            like.mutate(item.liked_by_me);
-          }}
-          className="flex items-center gap-1 text-[14px] font-semibold text-ink-muted transition-transform active:scale-90"
-        >
-          <Heart
-            className={cn(
-              "size-5 transition-colors",
-              item.liked_by_me && "fill-[#d4714a] text-[#d4714a]",
-            )}
-          />
-          {item.like_count}
-        </button>
-        <Link
-          href={`/p/${item.id}`}
-          className="flex items-center gap-1 text-[14px] font-semibold text-ink-muted"
-        >
-          <MessageCircle className="size-5" />
-          {item.comment_count}
-        </Link>
+      <div className="flex items-center justify-between px-4 pt-3.5">
+        <div className="flex items-center gap-5">
+          <button
+            type="button"
+            aria-label="좋아요"
+            onClick={() => {
+              if (!isAuthed) {
+                router.push("/login?next=/feed");
+                return;
+              }
+              like.mutate(item.liked_by_me);
+            }}
+            className="flex items-center gap-1.5 text-[14px] font-semibold text-ink-muted transition-transform active:scale-90"
+          >
+            <Heart
+              className={cn(
+                "size-[22px] transition-colors",
+                item.liked_by_me && "fill-[#d4714a] text-[#d4714a]",
+              )}
+            />
+            {item.like_count}
+          </button>
+          <Link
+            href={`/p/${item.id}`}
+            className="flex items-center gap-1.5 text-[14px] font-semibold text-ink-muted"
+          >
+            <MessageCircle className="size-[22px]" />
+            {item.comment_count}
+          </Link>
+        </div>
+        {item.rating != null && <LeafRating value={item.rating} />}
       </div>
 
-      {/* 텍스트 정보 (일부 → 더보기로 전체) */}
-      <div className="px-4 pb-4 pt-2">
-        {item.rating != null && <LeafRating value={item.rating} />}
-
-        {item.taste_memo && (
+      {/* 텍스트 — 노트가 캡션, 나머지는 더보기 */}
+      <div className="px-4 pb-4 pt-2.5">
+        {caption && (
           <p
             className={cn(
-              "mt-1.5 text-[13px] leading-relaxed text-brand-ink",
-              !expanded && "line-clamp-2",
+              "whitespace-pre-wrap text-[14px] leading-relaxed text-brand-ink",
+              !expanded && "line-clamp-1",
             )}
           >
-            <span className="font-bold">{item.author ?? "차 애호가"} </span>
-            {item.taste_memo}
+            {caption}
           </p>
         )}
 
         {expanded && (
-          <div className="mt-2 flex flex-col gap-2">
-            {(item.water_temperature ||
-              item.steeping_time ||
-              item.tea_amount ||
-              item.tool) && (
-              <div className="flex flex-wrap gap-1.5">
-                <Cond label="🌡️" value={item.water_temperature} />
-                <Cond label="⏱️" value={item.steeping_time} />
-                <Cond label="🍃" value={item.tea_amount} />
-                <Cond label="🫖" value={item.tool} />
-              </div>
+          <div className="mt-3 flex flex-col gap-2.5">
+            {showTasteInExpand && (
+              <p className="text-[13px] leading-relaxed text-brand-ink">
+                <span className="font-bold text-ink-muted">맛 · </span>
+                {item.taste_memo}
+              </p>
             )}
             {item.aroma_memo && (
               <p className="text-[13px] leading-relaxed text-brand-ink">
@@ -139,19 +141,22 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
                 {item.aroma_memo}
               </p>
             )}
-            {item.next_adjustment && (
-              <p className="text-[12px] font-semibold text-brand">
-                다음엔 · {item.next_adjustment}
-              </p>
+            {hasConditions && (
+              <div className="flex flex-wrap gap-1.5">
+                <Cond label="🌡️" value={item.water_temperature} />
+                <Cond label="⏱️" value={item.steeping_time} />
+                <Cond label="🍃" value={item.tea_amount} />
+                <Cond label="🫖" value={item.tool} />
+              </div>
             )}
           </div>
         )}
 
-        {hasDetails && (
+        {hasMore && (
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-1 text-[12px] font-semibold text-ink-muted"
+            className="mt-2 text-[13px] font-semibold text-ink-muted"
           >
             {expanded ? "접기" : "더보기"}
           </button>
@@ -160,7 +165,7 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
         {item.comment_count > 0 && (
           <Link
             href={`/p/${item.id}`}
-            className="mt-2 block text-[12px] text-ink-muted"
+            className="mt-3 block text-[13px] text-ink-muted"
           >
             댓글 {item.comment_count}개 모두 보기
           </Link>

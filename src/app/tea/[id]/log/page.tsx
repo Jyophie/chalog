@@ -441,13 +441,15 @@ export default function LogPage() {
           </p>
         </div>
 
-        {/* 다음에 조정할 점 */}
+        {/* 노트 */}
         <div className="mt-5">
-          <FieldLabel optional>다음에 조정할 점 </FieldLabel>
-          <Input
+          <FieldLabel optional>노트 </FieldLabel>
+          <textarea
             value={adjust}
             onChange={(e) => setAdjust(e.target.value)}
-            placeholder="예: 온도 낮추기, 시간 10초 줄이기"
+            rows={3}
+            placeholder="이 차에 대한 한마디 — 어땠는지, 다음엔 어떻게 우릴지 적어보세요"
+            className="w-full rounded-[16px] border border-hairline bg-field px-[17px] py-[13px] text-[14px] text-brand-ink outline-none transition-colors placeholder:text-[#1e2b2080] focus:border-brand"
           />
         </div>
 
