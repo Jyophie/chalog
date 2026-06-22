@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Logo } from "@/components/brand/logo";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { createClient } from "@/lib/supabase/server";
@@ -14,6 +15,9 @@ export default async function Home() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // 로그인 상태면 랜딩 대신 피드를 기본 진입점으로
+  if (user) redirect("/feed");
 
   return (
     <PhoneFrame>
@@ -66,10 +70,10 @@ export default async function Home() {
         {/* 남는 세로 공간을 흡수해 CTA를 하단으로 안정화 */}
         <div className="min-h-6 flex-1" />
 
-        {/* CTA — 비로그인 시 로그인/회원가입으로 */}
+        {/* CTA — 로그인/회원가입으로 (랜딩은 비로그인 전용) */}
         <div className="shrink-0 px-6">
           <Link
-            href={user ? "/upload" : "/login?next=/upload"}
+            href="/login?next=/upload"
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-pill bg-brand px-6 py-4 text-[16px] font-bold text-white shadow-brand transition-colors hover:bg-brand-dark"
           >
             차 사진 등록하기
@@ -88,18 +92,9 @@ export default async function Home() {
             </svg>
           </Link>
 
-          {user ? (
-            <Link
-              href="/archive"
-              className="mt-3 text-center text-[13px] font-semibold text-brand"
-            >
-              내 차 보관함 보기 →
-            </Link>
-          ) : (
-            <p className="mt-3 text-center text-[12px] text-ink-muted">
-              무료로 시작할 수 있어요 ✨
-            </p>
-          )}
+          <p className="mt-3 text-center text-[12px] text-ink-muted">
+            무료로 시작할 수 있어요 ✨
+          </p>
         </div>
       </main>
     </PhoneFrame>

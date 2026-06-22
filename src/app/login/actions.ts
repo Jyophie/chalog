@@ -9,7 +9,7 @@ export type AuthState = { error?: string; message?: string };
 
 function safeNext(next: FormDataEntryValue | null): string {
   const n = typeof next === "string" ? next : "";
-  return n.startsWith("/") ? n : "/upload";
+  return n.startsWith("/") ? n : "/feed";
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -120,7 +120,7 @@ export async function updatePassword(
   if (error) return { error: "변경에 실패했어요. 다시 시도해주세요." };
 
   revalidatePath("/", "layout");
-  redirect("/archive");
+  redirect("/feed");
 }
 
 export async function signInWithGoogle(formData: FormData): Promise<void> {
