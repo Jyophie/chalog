@@ -13,7 +13,7 @@ export async function GET(
   const [{ data: profile }, { data: logs }] = await Promise.all([
     admin
       .from("public_profiles")
-      .select("id, display_name")
+      .select("id, display_name, avatar_url")
       .eq("id", id)
       .maybeSingle(),
     admin
@@ -73,6 +73,7 @@ export async function GET(
 
   return NextResponse.json({
     author: profile?.display_name ?? null,
+    avatar: profile?.avatar_url ?? null,
     items,
     count: items.length,
     is_me: !!user && user.id === id,

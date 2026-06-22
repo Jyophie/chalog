@@ -17,7 +17,7 @@ export default async function MyPage({
 
   const { data: profile } = await supabase
     .from("users")
-    .select("display_name, created_at")
+    .select("display_name, avatar_url, created_at")
     .eq("id", user.id)
     .single();
 
@@ -25,6 +25,7 @@ export default async function MyPage({
     <MyClient
       email={user.email ?? ""}
       displayName={profile?.display_name ?? ""}
+      avatarUrl={profile?.avatar_url ?? null}
       joinedAt={profile?.created_at ?? null}
       urlError={sp.error === "delete" ? "탈퇴 처리에 실패했어요. 다시 시도해주세요." : undefined}
     />

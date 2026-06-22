@@ -9,6 +9,7 @@ import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { TabHeader } from "@/components/layout/tab-header";
 import { PhotoCarousel } from "@/components/photo-carousel";
+import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 function LeafRating({ value }: { value: number }) {
@@ -65,9 +66,7 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
           href={item.author_id ? `/u/${item.author_id}` : `/p/${item.id}`}
           className="flex min-w-0 flex-1 items-center gap-2.5"
         >
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-[14px] font-black text-white">
-            {(item.author || "?").charAt(0).toUpperCase()}
-          </span>
+          <Avatar src={item.author_avatar} name={item.author} className="size-9" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[14px] font-bold text-brand-ink">
               {item.author ?? "차 애호가"}

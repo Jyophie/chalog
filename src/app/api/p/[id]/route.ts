@@ -36,7 +36,7 @@ export async function GET(
   const { data: profile } = profileWrap
     ? await admin
         .from("public_profiles")
-        .select("id, display_name")
+        .select("id, display_name, avatar_url")
         .eq("id", profileWrap.user_id)
         .maybeSingle()
     : { data: null };
@@ -82,6 +82,7 @@ export async function GET(
     log: { ...log, images },
     tea: tea ? { ...tea, image_url: teaImage } : null,
     author: profile?.display_name ?? null,
+    author_avatar: profile?.avatar_url ?? null,
     liked_by_me: likedByMe,
     is_authed: !!user,
   });

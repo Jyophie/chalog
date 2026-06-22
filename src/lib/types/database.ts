@@ -42,12 +42,14 @@ export interface Database {
           id: string;
           email: string | null;
           display_name: string | null;
+          avatar_url: string | null;
           created_at: string;
         };
         Insert: {
           id: string;
           email?: string | null;
           display_name?: string | null;
+          avatar_url?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["users"]["Insert"]>;
@@ -216,7 +218,11 @@ export interface Database {
     };
     Views: {
       public_profiles: {
-        Row: { id: string; display_name: string | null };
+        Row: {
+          id: string;
+          display_name: string | null;
+          avatar_url: string | null;
+        };
         Relationships: [];
       };
     };

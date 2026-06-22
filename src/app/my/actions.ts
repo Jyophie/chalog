@@ -32,6 +32,50 @@ export async function updateProfile(
   return { message: "닉네임을 저장했어요." };
 }
 
+/** 프로필 사진 저장 (클라이언트가 공개 버킷 업로드 후 URL 전달) */
+export async function updateAvatar(url: string): Promise<ProfileState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/my");
+
+  if (typeof url !== "string" || (url && !url.startsWith("http"))) {
+    return { error: "잘못된 이미지예요." };
+  }
+
+  const { error } = await supabase
+    .from("users")
+    .update({ avatar_url: url || null })
+    .eq("id", user.id);
+  if (error) return { error: "저장에 실패했어요. 다시 시도해주세요." };
+
+  revalidatePath("/my");
+  return { message: url ? "프로필 사진을 변경했어요." : "프로필 사진을 지웠어요." };
+}
+
+/** 비밀번호 변경 (로그인 상태에서) */
+export async function changePassword(
+  _prev: ProfileState,
+  formData: FormData,
+): Promise<ProfileState> {
+  const pw = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+  if (pw.length < 6) return { error: "비밀번호는 6자 이상이어야 해요." };
+  if (pw !== confirm) return { error: "비밀번호가 일치하지 않아요." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/my");
+
+  const { error } = await supabase.auth.updateUser({ password: pw });
+  if (error) return { error: "변경에 실패했어요. 다시 시도해주세요." };
+
+  return { message: "비밀번호를 변경했어요." };
+}
+
 /** 회원 탈퇴 — Storage 정리 후 auth 사용자 삭제(연쇄로 DB 전체 삭제) */
 export async function deleteAccount(): Promise<void> {
   const supabase = await createClient();

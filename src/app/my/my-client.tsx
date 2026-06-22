@@ -1,19 +1,30 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  Camera,
   ChevronRight,
   FileText,
+  KeyRound,
   LogOut,
   Pencil,
   Shield,
 } from "lucide-react";
 import { signOut } from "@/app/login/actions";
-import { updateProfile, deleteAccount, type ProfileState } from "./actions";
+import {
+  updateProfile,
+  updateAvatar,
+  changePassword,
+  deleteAccount,
+  type ProfileState,
+} from "./actions";
+import { uploadAvatar, UploadError } from "@/lib/storage";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { TabHeader } from "@/components/layout/tab-header";
+import { Avatar } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 function fmtDate(iso: string | null) {
   if (!iso) return "";
@@ -26,16 +37,24 @@ function fmtDate(iso: string | null) {
 export function MyClient({
   email,
   displayName,
+  avatarUrl,
   joinedAt,
   urlError,
 }: {
   email: string;
   displayName: string;
+  avatarUrl: string | null;
   joinedAt: string | null;
   urlError?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [avatar, setAvatar] = useState(avatarUrl);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarMsg, setAvatarMsg] = useState<string | null>(null);
+
   const [state, formAction, pending] = useActionState<ProfileState, FormData>(
     async (prev, fd) => {
       const res = await updateProfile(prev, fd);
@@ -44,9 +63,32 @@ export function MyClient({
     },
     {},
   );
+  const [pwState, pwAction, pwPending] = useActionState<ProfileState, FormData>(
+    (prev, fd) => changePassword(prev, fd),
+    {},
+  );
+
+  async function onPickAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setAvatarMsg(null);
+    setAvatarBusy(true);
+    try {
+      const url = await uploadAvatar(file);
+      const res = await updateAvatar(url);
+      if (res.error) setAvatarMsg(res.error);
+      else setAvatar(url);
+    } catch (err) {
+      setAvatarMsg(
+        err instanceof UploadError ? err.message : "사진 변경에 실패했어요.",
+      );
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
 
   const name = displayName || "차 애호가";
-  const initial = (displayName || email || "?").trim().charAt(0).toUpperCase();
 
   return (
     <PhoneFrame scroll={false}>
@@ -56,9 +98,35 @@ export function MyClient({
         <main className="min-h-0 flex-1 overflow-y-auto px-6 pb-28 pt-2">
         {/* 프로필 카드 */}
         <div className="flex items-center gap-4 rounded-[20px] border border-hairline bg-field p-5 shadow-[0px_2px_6px_rgba(30,60,35,0.05)]">
-          <span className="grid size-16 shrink-0 place-items-center rounded-full bg-brand text-[24px] font-black text-white">
-            {initial}
-          </span>
+          <div className="relative shrink-0">
+            <Avatar
+              src={avatar}
+              name={displayName || email}
+              className="size-16"
+              fontClassName="text-[24px]"
+            />
+            {avatarBusy && (
+              <span className="absolute inset-0 grid place-items-center rounded-full bg-black/40 text-[10px] font-bold text-white">
+                업로드
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={avatarBusy}
+              aria-label="프로필 사진 변경"
+              className="absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full border-2 border-field bg-brand text-white shadow transition-colors hover:bg-brand-dark disabled:opacity-60"
+            >
+              <Camera className="size-3.5" />
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={onPickAvatar}
+            />
+          </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[18px] font-black text-brand-ink">
               {name}
@@ -81,6 +149,10 @@ export function MyClient({
             </button>
           )}
         </div>
+
+        {avatarMsg && (
+          <p className="mt-2 text-[13px] text-red-500">{avatarMsg}</p>
+        )}
 
         {/* 닉네임 수정 */}
         {editing && (
@@ -144,6 +216,62 @@ export function MyClient({
             </span>
             <ChevronRight className="size-4 text-ink-muted" />
           </Link>
+        </div>
+
+        {/* 비밀번호 변경 */}
+        <div className="mt-3 overflow-hidden rounded-[20px] border border-hairline bg-field shadow-[0px_2px_6px_rgba(30,60,35,0.05)]">
+          <button
+            type="button"
+            onClick={() => setPwOpen((v) => !v)}
+            className="flex w-full items-center gap-3 px-4 py-3.5 transition-colors hover:bg-tint-green/30"
+          >
+            <KeyRound className="size-[18px] text-brand" />
+            <span className="flex-1 text-left text-[14px] font-semibold text-brand-ink">
+              비밀번호 변경
+            </span>
+            <ChevronRight
+              className={cn(
+                "size-4 text-ink-muted transition-transform",
+                pwOpen && "rotate-90",
+              )}
+            />
+          </button>
+          {pwOpen && (
+            <form
+              action={pwAction}
+              className="flex flex-col gap-2 border-t border-hairline px-4 py-3.5"
+            >
+              <input
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                placeholder="새 비밀번호 (6자 이상)"
+                className="h-[46px] w-full rounded-[14px] border border-hairline bg-paper px-4 text-[14px] text-brand-ink outline-none transition-colors placeholder:text-[#1e2b2080] focus:border-brand"
+              />
+              <input
+                name="confirm"
+                type="password"
+                autoComplete="new-password"
+                placeholder="새 비밀번호 확인"
+                className="h-[46px] w-full rounded-[14px] border border-hairline bg-paper px-4 text-[14px] text-brand-ink outline-none transition-colors placeholder:text-[#1e2b2080] focus:border-brand"
+              />
+              {pwState.error && (
+                <p className="text-[13px] text-red-500">{pwState.error}</p>
+              )}
+              {pwState.message && (
+                <p className="text-[13px] font-semibold text-brand">
+                  {pwState.message}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={pwPending}
+                className="mt-1 rounded-pill bg-brand py-3 text-[14px] font-bold text-white shadow-brand disabled:opacity-60"
+              >
+                {pwPending ? "변경 중…" : "비밀번호 변경"}
+              </button>
+            </form>
+          )}
         </div>
 
         {/* 로그아웃 */}

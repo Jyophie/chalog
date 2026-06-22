@@ -32,9 +32,13 @@ export async function GET(
 
   const ids = [...new Set((comments ?? []).map((c) => c.user_id))];
   const { data: profiles } = ids.length
-    ? await admin.from("public_profiles").select("id, display_name").in("id", ids)
+    ? await admin
+        .from("public_profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", ids)
     : { data: [] };
   const nameById = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
+  const avatarById = new Map((profiles ?? []).map((p) => [p.id, p.avatar_url]));
 
   const supabase = await createClient();
   const {
@@ -45,6 +49,7 @@ export async function GET(
     comments: (comments ?? []).map((c) => ({
       ...c,
       author: nameById.get(c.user_id) ?? null,
+      author_avatar: avatarById.get(c.user_id) ?? null,
     })),
     me: user?.id ?? null,
     is_owner: user ? tea?.user_id === user.id : false,

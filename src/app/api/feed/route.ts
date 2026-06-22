@@ -45,10 +45,13 @@ export async function GET(request: Request) {
   const { data: profiles } = authorIds.length
     ? await admin
         .from("public_profiles")
-        .select("id, display_name")
+        .select("id, display_name, avatar_url")
         .in("id", authorIds)
     : { data: [] };
   const nameById = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
+  const avatarById = new Map(
+    (profiles ?? []).map((p) => [p.id, p.avatar_url]),
+  );
 
   // 이미지 서명 (기록 사진 여러 장 + 대표/차 이미지 폴백)
   const paths = [
@@ -96,6 +99,7 @@ export async function GET(request: Request) {
       tea_category: tea?.tea_category ?? null,
       author: tea ? (nameById.get(tea.user_id) ?? null) : null,
       author_id: tea?.user_id ?? null,
+      author_avatar: tea ? (avatarById.get(tea.user_id) ?? null) : null,
       brewed_at: l.brewed_at,
       images,
       water_temperature: l.water_temperature,

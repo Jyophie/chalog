@@ -13,6 +13,7 @@ import {
 } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { PhotoCarousel } from "@/components/photo-carousel";
+import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 function LeafRating({ value }: { value: number }) {
@@ -64,9 +65,12 @@ function CommentsSection({ logId }: { logId: string }) {
           const canDelete = data?.is_owner || data?.me === c.user_id;
           return (
             <li key={c.id} className="flex gap-2.5">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-[13px] font-black text-white">
-                {(c.author || "?").charAt(0).toUpperCase()}
-              </span>
+              <Avatar
+                src={c.author_avatar}
+                name={c.author}
+                className="size-8"
+                fontClassName="text-[13px]"
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-[13px] font-bold text-brand-ink">
@@ -245,9 +249,15 @@ export default function PublicLogPage() {
             {tea?.user_id ? (
               <Link
                 href={`/u/${tea.user_id}`}
-                className="mt-0.5 inline-block text-[12px] font-semibold text-brand"
+                className="mt-1 inline-flex items-center gap-1.5 text-[12px] font-semibold text-brand"
               >
-                by {author ?? "차 애호가"}
+                <Avatar
+                  src={data.author_avatar}
+                  name={author}
+                  className="size-4"
+                  fontClassName="text-[8px]"
+                />
+                {author ?? "차 애호가"}
               </Link>
             ) : (
               <p className="mt-0.5 text-[12px] font-semibold text-brand">

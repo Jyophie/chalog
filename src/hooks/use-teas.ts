@@ -52,6 +52,7 @@ export interface FeedItem {
   tea_category: TeaCategory | null;
   author: string | null;
   author_id: string | null;
+  author_avatar: string | null;
   brewed_at: string;
   images: string[];
   water_temperature: string | null;
@@ -96,6 +97,7 @@ export interface PublicLogDetail {
   log: LogRow & { images: string[] };
   tea: PublicLogTea | null;
   author: string | null;
+  author_avatar: string | null;
   liked_by_me: boolean;
   is_authed: boolean;
 }
@@ -114,6 +116,7 @@ export interface ProfileItem {
 
 export interface UserProfile {
   author: string | null;
+  avatar: string | null;
   items: ProfileItem[];
   count: number;
   is_me: boolean;
@@ -209,6 +212,7 @@ export interface CommentItem {
   created_at: string;
   user_id: string;
   author: string | null;
+  author_avatar: string | null;
 }
 
 export interface CommentsResponse {

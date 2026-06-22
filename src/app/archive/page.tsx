@@ -152,9 +152,9 @@ export default function ArchivePage() {
               <Link
                 href="/upload"
                 aria-label="차 등록"
-                className="grid size-10 shrink-0 place-items-center rounded-full bg-brand text-white shadow-[0px_4px_8px_rgba(74,124,89,0.31)] transition-colors hover:bg-brand-dark"
+                className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-white shadow-[0px_4px_8px_rgba(74,124,89,0.31)] transition-colors hover:bg-brand-dark"
               >
-                <Plus className="size-[18px]" />
+                <Plus className="size-4" />
               </Link>
             }
           />

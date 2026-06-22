@@ -6,6 +6,7 @@ import { Heart, Images, MessageCircle } from "lucide-react";
 import { useUserProfile } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { TopBar } from "@/components/layout/top-bar";
+import { Avatar } from "@/components/ui/avatar";
 
 /** 작성자 공개 프로필 (id = user id, 읽기 전용·비로그인 포함) */
 export default function UserProfilePage() {
@@ -14,7 +15,6 @@ export default function UserProfilePage() {
   const { data, isLoading, isError } = useUserProfile(id);
 
   const name = data?.author || "차 애호가";
-  const initial = name.trim().charAt(0).toUpperCase();
 
   return (
     <PhoneFrame>
@@ -23,9 +23,12 @@ export default function UserProfilePage() {
       <main className="flex flex-1 flex-col px-6 pt-2 pb-10">
         {/* 프로필 헤더 */}
         <div className="flex items-center gap-4">
-          <span className="grid size-16 shrink-0 place-items-center rounded-full bg-brand text-[24px] font-black text-white">
-            {initial}
-          </span>
+          <Avatar
+            src={data?.avatar}
+            name={name}
+            className="size-16"
+            fontClassName="text-[24px]"
+          />
           <div className="min-w-0">
             <h1 className="truncate text-[20px] font-black text-brand-ink">
               {name}
