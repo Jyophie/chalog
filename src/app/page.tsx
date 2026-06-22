@@ -42,13 +42,13 @@ export default async function Home() {
         </div>
 
         {/* 본문 (Figma Container 1:117) */}
-        <div className="flex flex-1 flex-col px-6 pt-6 pb-10">
+        <div className="flex flex-1 flex-col px-6 pt-6 pb-8">
           <p className="text-center text-[14px] text-ink-muted">
             AI가 분석하고, 나만의 티 아카이브로 쌓여요.
           </p>
 
           {/* 핵심 가치 카드 */}
-          <div className="mt-6 flex flex-col gap-2.5">
+          <div className="mt-6 flex flex-col gap-3">
             {FEATURES.map((f) => (
               <div
                 key={f.label}
@@ -62,10 +62,13 @@ export default async function Home() {
             ))}
           </div>
 
+          {/* 남는 세로 공간을 흡수해 CTA를 하단으로 안정화 */}
+          <div className="min-h-6 flex-1" />
+
           {/* CTA — 비로그인 시 로그인/회원가입으로 */}
           <Link
             href={user ? "/upload" : "/login?next=/upload"}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-pill bg-brand px-6 py-4 text-[16px] font-bold text-white shadow-brand transition-colors hover:bg-brand-dark"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-pill bg-brand px-6 py-4 text-[16px] font-bold text-white shadow-brand transition-colors hover:bg-brand-dark"
           >
             차 사진 등록하기
             <svg
