@@ -3,33 +3,33 @@
 --   tea_logs.is_public · like_count · comment_count
 --   likes/comments 를 log_id 기준으로 재정의
 --   차(teas)는 아카이브 전용(항상 비공개), 공개는 기록 단위로만
---   Supabase SQL Editor에 통째로 붙여넣고 Run.
+--   Supabase SQL Editor에 통째로 붙여넣고 Run. (재실행 안전)
 -- ════════════════════════════════════════════════════════════════
 
--- ── tea_logs: 공개 여부 + 카운터 ───────────────────────────────
+-- ── 0) 0002 의 공개 정책 먼저 제거 (컬럼/타입 의존성 해소) ──────
+drop policy if exists "teas_select_public"   on public.teas;
+drop policy if exists "guides_select_public" on public.brewing_guides;
+drop policy if exists "logs_select_public"   on public.tea_logs;
+
+-- ── 1) tea_logs: 공개 여부 + 카운터 ────────────────────────────
 alter table public.tea_logs
   add column if not exists is_public     boolean not null default false,
   add column if not exists like_count    integer not null default 0,
   add column if not exists comment_count integer not null default 0;
 
--- 0002의 is_private 는 더 이상 사용하지 않음
+-- 0002의 is_private 는 더 이상 사용하지 않음 (정책 제거 후 안전하게 드롭)
 alter table public.tea_logs drop column if exists is_private;
 
 create index if not exists tea_logs_public_created_idx
   on public.tea_logs (created_at desc) where is_public;
 
--- ── 차 단위 공개 정책/카운터 정리 (0002 롤백) ──────────────────
-drop policy if exists "teas_select_public"   on public.teas;
-drop policy if exists "guides_select_public" on public.brewing_guides;
-drop policy if exists "logs_select_public"   on public.tea_logs;
-
--- 기존 likes/comments(tea_id 기준) 제거 → 트리거도 함께 사라짐
+-- ── 2) 기존 likes/comments(tea_id 기준)·카운터 정리 ────────────
 drop table if exists public.comments cascade;
 drop table if exists public.likes cascade;
 drop function if exists public.bump_like_count() cascade;
 drop function if exists public.bump_comment_count() cascade;
 
--- teas 의 미사용 카운터/공개 컬럼 정리
+-- teas 의 미사용 카운터/공개 컬럼·타입 정리
 alter table public.teas drop column if exists like_count;
 alter table public.teas drop column if exists comment_count;
 alter table public.teas drop column if exists visibility;
