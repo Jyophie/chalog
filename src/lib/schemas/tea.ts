@@ -86,7 +86,8 @@ export type BrewingGuide = z.infer<typeof brewingGuideSchema>;
 /** 마신 기록 입력 (명세 4-9) */
 export const teaLogSchema = z.object({
   brewed_at: z.string(),
-  photo_url: z.string().optional(), // Storage 경로 (읽을 때 signed URL로 변환)
+  photo_url: z.string().optional(), // 대표(cover) Storage 경로
+  photo_paths: z.array(z.string()).max(10).optional(), // 사진 여러 장 경로
   is_public: z.boolean().optional(), // 피드 공개 여부
   water_temperature: z.string().optional(),
   tea_amount: z.string().optional(),

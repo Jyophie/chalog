@@ -30,7 +30,12 @@ export async function POST(
   }
 
   // 사진 경로는 본인 폴더만 허용
-  if (parsed.data.photo_url && !parsed.data.photo_url.startsWith(`${user.id}/`)) {
+  const photoPaths = parsed.data.photo_paths ?? [];
+  const allPhotos = [
+    ...photoPaths,
+    ...(parsed.data.photo_url ? [parsed.data.photo_url] : []),
+  ];
+  if (allPhotos.some((p) => !p.startsWith(`${user.id}/`))) {
     return NextResponse.json({ error: "invalid photo" }, { status: 400 });
   }
 
@@ -44,7 +49,13 @@ export async function POST(
 
   const { data, error } = await supabase
     .from("tea_logs")
-    .insert({ ...parsed.data, tea_id: teaId, user_id: user.id })
+    .insert({
+      ...parsed.data,
+      photo_paths: photoPaths,
+      photo_url: parsed.data.photo_url ?? photoPaths[0] ?? null, // 대표 이미지
+      tea_id: teaId,
+      user_id: user.id,
+    })
     .select("id")
     .single();
   if (error || !data)

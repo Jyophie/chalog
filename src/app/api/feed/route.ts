@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   let q = admin
     .from("tea_logs")
     .select(
-      "id, tea_id, brewed_at, photo_url, taste_memo, rating, like_count, comment_count, created_at",
+      "id, tea_id, brewed_at, photo_url, photo_paths, water_temperature, steeping_time, tea_amount, tool, taste_memo, aroma_memo, next_adjustment, rating, like_count, comment_count, created_at",
     )
     .eq("is_public", true)
     .order("created_at", { ascending: false })
@@ -50,8 +50,9 @@ export async function GET(request: Request) {
     : { data: [] };
   const nameById = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
 
-  // 이미지 서명 (기록 사진 우선, 없으면 차 대표 이미지)
+  // 이미지 서명 (기록 사진 여러 장 + 대표/차 이미지 폴백)
   const paths = [
+    ...logs.flatMap((l) => l.photo_paths ?? []),
     ...logs.map((l) => l.photo_url),
     ...(teas ?? []).map((t) => t.image_url),
   ].filter((p): p is string => !!p);
@@ -64,6 +65,7 @@ export async function GET(request: Request) {
       if (s.path && s.signedUrl) signedByPath.set(s.path, s.signedUrl);
     });
   }
+  const sign = (p: string | null) => (p ? (signedByPath.get(p) ?? null) : null);
 
   // 내가 좋아요한 기록
   const likedSet = new Set<string>();
@@ -81,16 +83,28 @@ export async function GET(request: Request) {
 
   const items = logs.map((l) => {
     const tea = teaById.get(l.tea_id);
-    const photoPath = l.photo_url ?? tea?.image_url ?? null;
+    const sources =
+      l.photo_paths && l.photo_paths.length > 0
+        ? l.photo_paths
+        : [l.photo_url ?? tea?.image_url ?? null];
+    const images = sources
+      .map(sign)
+      .filter((u): u is string => !!u);
     return {
       id: l.id,
       tea_name: tea?.tea_name ?? null,
       tea_category: tea?.tea_category ?? null,
       author: tea ? (nameById.get(tea.user_id) ?? null) : null,
       brewed_at: l.brewed_at,
+      images,
+      water_temperature: l.water_temperature,
+      steeping_time: l.steeping_time,
+      tea_amount: l.tea_amount,
+      tool: l.tool,
       taste_memo: l.taste_memo,
+      aroma_memo: l.aroma_memo,
+      next_adjustment: l.next_adjustment,
       rating: l.rating,
-      image_url: photoPath ? (signedByPath.get(photoPath) ?? null) : null,
       like_count: l.like_count,
       comment_count: l.comment_count,
       liked_by_me: likedSet.has(l.id),

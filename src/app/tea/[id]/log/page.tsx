@@ -8,6 +8,7 @@ import {
   Coffee,
   ImageIcon,
   Leaf,
+  Plus,
   Star,
   Thermometer,
   Timer,
@@ -159,9 +160,8 @@ export default function LogPage() {
   const galleryRef = useRef<HTMLInputElement>(null);
 
   const [brewedAt, setBrewedAt] = useState(todayISO());
-  const [photoPath, setPhotoPath] = useState<string>();
-  const [photoPreview, setPhotoPreview] = useState<string>();
-  const [uploading, setUploading] = useState(false);
+  const [photos, setPhotos] = useState<{ path: string; preview: string }[]>([]);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const [waterTemp, setWaterTemp] = useState("");
   const [steepTime, setSteepTime] = useState("");
   const [amount, setAmount] = useState("");
@@ -175,36 +175,55 @@ export default function LogPage() {
   const [isPublic, setIsPublic] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const MAX_PHOTOS = 10;
+
   async function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files ?? []);
     e.target.value = "";
-    if (!file) return;
+    if (!files.length) return;
     setError(null);
-    setPhotoPreview(URL.createObjectURL(file));
-    setUploading(true);
-    try {
-      const path = await uploadTeaImage(file);
-      setPhotoPath(path);
-    } catch (err) {
-      setError(
-        err instanceof UploadError ? err.message : "사진 업로드에 실패했어요.",
-      );
-      setPhotoPreview(undefined);
-    } finally {
-      setUploading(false);
-    }
+    const take = files.slice(0, MAX_PHOTOS - photos.length);
+    setUploadingCount((c) => c + take.length);
+    await Promise.all(
+      take.map(async (file) => {
+        const preview = URL.createObjectURL(file);
+        try {
+          const path = await uploadTeaImage(file);
+          setPhotos((prev) => [...prev, { path, preview }]);
+        } catch (err) {
+          setError(
+            err instanceof UploadError
+              ? err.message
+              : "사진 업로드에 실패했어요.",
+          );
+          URL.revokeObjectURL(preview);
+        } finally {
+          setUploadingCount((c) => c - 1);
+        }
+      }),
+    );
   }
 
-  function removePhoto() {
-    setPhotoPath(undefined);
-    setPhotoPreview(undefined);
+  function removePhoto(idx: number) {
+    setPhotos((prev) => {
+      const next = [...prev];
+      URL.revokeObjectURL(next[idx].preview);
+      next.splice(idx, 1);
+      return next;
+    });
   }
+
+  const uploading = uploadingCount > 0;
 
   async function onSubmit() {
     setError(null);
+    if (photos.length === 0) {
+      setError("사진을 최소 한 장 이상 첨부해주세요.");
+      return;
+    }
     const payload = teaLogSchema.safeParse({
       brewed_at: brewedAt,
-      photo_url: photoPath || undefined,
+      photo_paths: photos.map((p) => p.path),
       water_temperature: waterTemp || undefined,
       steeping_time: steepTime || undefined,
       tea_amount: amount || undefined,
@@ -263,9 +282,9 @@ export default function LogPage() {
           />
         </div>
 
-        {/* 찻자리 사진 */}
+        {/* 찻자리 사진 (필수, 여러 장) */}
         <div className="mt-5">
-          <FieldLabel optional>찻자리 사진 </FieldLabel>
+          <FieldLabel required>찻자리 사진 </FieldLabel>
           <input
             ref={cameraRef}
             type="file"
@@ -278,33 +297,12 @@ export default function LogPage() {
             ref={galleryRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
+            multiple
             className="hidden"
             onChange={onPickPhoto}
           />
 
-          {photoPreview ? (
-            <div className="relative overflow-hidden rounded-[16px] border border-hairline">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photoPreview}
-                alt="찻자리 사진"
-                className="aspect-video w-full object-cover"
-              />
-              {uploading && (
-                <div className="absolute inset-0 grid place-items-center bg-black/30 text-[13px] font-semibold text-white">
-                  올리는 중…
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={removePhoto}
-                aria-label="사진 삭제"
-                className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-          ) : (
+          {photos.length === 0 ? (
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -321,6 +319,43 @@ export default function LogPage() {
                 <Upload className="size-[22px] text-brand" /> 갤러리에서 선택
               </button>
             </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {photos.map((p, i) => (
+                <div
+                  key={p.path}
+                  className="relative aspect-square overflow-hidden rounded-[14px] border border-hairline"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.preview}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    aria-label="사진 삭제"
+                    className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/45 text-white"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ))}
+              {photos.length < MAX_PHOTOS && (
+                <button
+                  type="button"
+                  onClick={() => galleryRef.current?.click()}
+                  aria-label="사진 추가"
+                  className="grid aspect-square place-items-center rounded-[14px] border-[1.5px] border-dashed border-hairline bg-field text-brand transition-colors hover:bg-tint-green/30"
+                >
+                  <Plus className="size-6" />
+                </button>
+              )}
+            </div>
+          )}
+          {uploading && (
+            <p className="mt-2 text-[12px] text-ink-muted">사진 올리는 중…</p>
           )}
         </div>
 
@@ -463,8 +498,12 @@ export default function LogPage() {
           disabled={busy}
           className="mt-7 flex w-full items-center justify-center gap-2 rounded-pill bg-brand px-6 py-4 text-[16px] font-bold text-white shadow-brand transition-colors hover:bg-brand-dark disabled:opacity-60"
         >
-          {addLog.isPending ? "저장 중…" : "기록 저장하기"}
-          {!addLog.isPending && <Check className="size-[18px]" />}
+          {addLog.isPending
+            ? "저장 중…"
+            : uploading
+              ? "사진 올리는 중…"
+              : "기록 저장하기"}
+          {!busy && <Check className="size-[18px]" />}
         </button>
       </main>
     </PhoneFrame>

@@ -138,6 +138,7 @@ export interface Database {
           user_id: string;
           brewed_at: string;
           photo_url: string | null;
+          photo_paths: string[];
           water_temperature: string | null;
           tea_amount: string | null;
           steeping_time: string | null;
@@ -159,6 +160,7 @@ export interface Database {
           user_id: string;
           brewed_at?: string;
           photo_url?: string | null;
+          photo_paths?: string[];
           is_public?: boolean;
           like_count?: number;
           comment_count?: number;

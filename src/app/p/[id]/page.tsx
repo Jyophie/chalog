@@ -11,6 +11,7 @@ import {
   useDeleteComment,
 } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
+import { PhotoCarousel } from "@/components/photo-carousel";
 import { cn } from "@/lib/utils";
 
 function LeafRating({ value }: { value: number }) {
@@ -177,7 +178,7 @@ export default function PublicLogPage() {
   }
 
   const { log, tea, author } = data;
-  const thumb = tea?.image_url ?? log.photo_url ?? null;
+  const thumb = tea?.image_url ?? log.images[0] ?? null;
   const teaMeta = [tea?.tea_category, tea?.origin].filter(Boolean).join(" · ");
 
   return (
@@ -257,13 +258,10 @@ export default function PublicLogPage() {
             {log.rating != null && <LeafRating value={log.rating} />}
           </div>
 
-          {log.photo_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={log.photo_url}
-              alt="찻자리 사진"
-              className="mt-3 aspect-video w-full rounded-[14px] object-cover"
-            />
+          {log.images.length > 0 && (
+            <div className="mt-3 overflow-hidden rounded-[14px] border border-hairline">
+              <PhotoCarousel images={log.images} />
+            </div>
           )}
 
           {(log.water_temperature ||

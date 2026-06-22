@@ -52,9 +52,15 @@ export interface FeedItem {
   tea_category: TeaCategory | null;
   author: string | null;
   brewed_at: string;
+  images: string[];
+  water_temperature: string | null;
+  steeping_time: string | null;
+  tea_amount: string | null;
+  tool: string | null;
   taste_memo: string | null;
+  aroma_memo: string | null;
+  next_adjustment: string | null;
   rating: number | null;
-  image_url: string | null;
   like_count: number;
   comment_count: number;
   liked_by_me: boolean;
@@ -86,7 +92,7 @@ export interface PublicLogTea {
 }
 
 export interface PublicLogDetail {
-  log: LogRow & { photo_url: string | null };
+  log: LogRow & { images: string[] };
   tea: PublicLogTea | null;
   author: string | null;
   liked_by_me: boolean;

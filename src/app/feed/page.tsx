@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Heart, Leaf, MessageCircle } from "lucide-react";
 import { useFeed, useToggleLike, type FeedItem } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { PhotoCarousel } from "@/components/photo-carousel";
 import { cn } from "@/lib/utils";
 
 function LeafRating({ value }: { value: number }) {
@@ -24,101 +26,147 @@ function LeafRating({ value }: { value: number }) {
   );
 }
 
+function Cond({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <span className="rounded-full bg-tint-green px-2.5 py-1 text-[11px] font-semibold text-mark">
+      {label} {value}
+    </span>
+  );
+}
+
 function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
   const router = useRouter();
   const like = useToggleLike(item.id);
+  const [expanded, setExpanded] = useState(false);
+
+  const hasDetails =
+    !!item.aroma_memo ||
+    !!item.water_temperature ||
+    !!item.steeping_time ||
+    !!item.tea_amount ||
+    !!item.tool ||
+    !!item.next_adjustment ||
+    (item.taste_memo?.length ?? 0) > 60;
+
   return (
-    <Link
-      href={`/p/${item.id}`}
-      className="block overflow-hidden rounded-[20px] border border-hairline bg-field shadow-[0px_2px_12px_rgba(30,60,35,0.05)]"
-    >
-      <div className="relative aspect-[4/3]">
-        {item.image_url ? (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={item.image_url}
-              alt={item.tea_name ?? "차"}
-              className="absolute inset-0 size-full object-cover"
-            />
-            <div className="absolute inset-0 bg-paper/25" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-tint-green">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/decor/teacup.svg"
-              alt=""
-              aria-hidden
-              className="absolute left-4 top-4 size-8 opacity-70"
-            />
-          </div>
-        )}
-        <div className="absolute inset-x-0 bottom-0 p-3">
-          <p
-            className={cn(
-              "truncate text-[15px] font-black",
-              item.image_url ? "text-white" : "text-brand-ink",
-            )}
-          >
-            {item.tea_name || "이름 미정"}
-          </p>
-          <p
-            className={cn(
-              "truncate text-[12px] font-semibold",
-              item.image_url ? "text-white/85" : "text-ink-muted",
-            )}
-          >
+    <article className="overflow-hidden rounded-[20px] border border-hairline bg-field shadow-[0px_2px_12px_rgba(30,60,35,0.05)]">
+      {/* 작성자 헤더 */}
+      <Link href={`/p/${item.id}`} className="flex items-center gap-2.5 px-4 py-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-[14px] font-black text-white">
+          {(item.author || "?").charAt(0).toUpperCase()}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14px] font-bold text-brand-ink">
             {item.author ?? "차 애호가"}
+          </p>
+          <p className="truncate text-[12px] text-ink-muted">
+            {item.tea_name || "이름 미정"}
             {item.tea_category ? ` · ${item.tea_category}` : ""}
           </p>
         </div>
-      </div>
+        <span className="shrink-0 text-[12px] text-ink-muted">
+          {item.brewed_at}
+        </span>
+      </Link>
 
-      {/* 기록 내용 */}
-      <div className="px-4 pt-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[12px] font-semibold text-ink-muted">
-            {item.brewed_at}
-          </span>
-          {item.rating != null && <LeafRating value={item.rating} />}
-        </div>
-        {item.taste_memo && (
-          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-brand-ink">
-            {item.taste_memo}
-          </p>
-        )}
-      </div>
+      {/* 사진 (필터 없음) */}
+      <PhotoCarousel images={item.images} />
 
-      <div className="flex items-center gap-4 px-4 pb-3 pt-2.5">
+      {/* 액션 */}
+      <div className="flex items-center gap-4 px-4 pt-3">
         <button
           type="button"
           aria-label="좋아요"
-          onClick={(e) => {
-            e.preventDefault();
+          onClick={() => {
             if (!isAuthed) {
               router.push("/login?next=/feed");
               return;
             }
             like.mutate(item.liked_by_me);
           }}
-          className="flex items-center gap-1 text-[13px] font-semibold text-ink-muted transition-transform active:scale-90"
+          className="flex items-center gap-1 text-[14px] font-semibold text-ink-muted transition-transform active:scale-90"
         >
           <Heart
             className={cn(
-              "size-4 transition-colors",
+              "size-5 transition-colors",
               item.liked_by_me && "fill-[#d4714a] text-[#d4714a]",
             )}
           />
           {item.like_count}
         </button>
-        <span className="flex items-center gap-1 text-[13px] font-semibold text-ink-muted">
-          <MessageCircle className="size-4" />
+        <Link
+          href={`/p/${item.id}`}
+          className="flex items-center gap-1 text-[14px] font-semibold text-ink-muted"
+        >
+          <MessageCircle className="size-5" />
           {item.comment_count}
-        </span>
+        </Link>
       </div>
-    </Link>
+
+      {/* 텍스트 정보 (일부 → 더보기로 전체) */}
+      <div className="px-4 pb-4 pt-2">
+        {item.rating != null && <LeafRating value={item.rating} />}
+
+        {item.taste_memo && (
+          <p
+            className={cn(
+              "mt-1.5 text-[13px] leading-relaxed text-brand-ink",
+              !expanded && "line-clamp-2",
+            )}
+          >
+            <span className="font-bold">{item.author ?? "차 애호가"} </span>
+            {item.taste_memo}
+          </p>
+        )}
+
+        {expanded && (
+          <div className="mt-2 flex flex-col gap-2">
+            {(item.water_temperature ||
+              item.steeping_time ||
+              item.tea_amount ||
+              item.tool) && (
+              <div className="flex flex-wrap gap-1.5">
+                <Cond label="🌡️" value={item.water_temperature} />
+                <Cond label="⏱️" value={item.steeping_time} />
+                <Cond label="🍃" value={item.tea_amount} />
+                <Cond label="🫖" value={item.tool} />
+              </div>
+            )}
+            {item.aroma_memo && (
+              <p className="text-[13px] leading-relaxed text-brand-ink">
+                <span className="font-bold text-ink-muted">향 · </span>
+                {item.aroma_memo}
+              </p>
+            )}
+            {item.next_adjustment && (
+              <p className="text-[12px] font-semibold text-brand">
+                다음엔 · {item.next_adjustment}
+              </p>
+            )}
+          </div>
+        )}
+
+        {hasDetails && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1 text-[12px] font-semibold text-ink-muted"
+          >
+            {expanded ? "접기" : "더보기"}
+          </button>
+        )}
+
+        {item.comment_count > 0 && (
+          <Link
+            href={`/p/${item.id}`}
+            className="mt-2 block text-[12px] text-ink-muted"
+          >
+            댓글 {item.comment_count}개 모두 보기
+          </Link>
+        )}
+      </div>
+    </article>
   );
 }
 

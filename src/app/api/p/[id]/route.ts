@@ -41,7 +41,7 @@ export async function GET(
         .maybeSingle()
     : { data: null };
 
-  // 이미지 서명 (기록 사진 + 차 대표 이미지)
+  // 이미지 서명 (기록 사진 여러 장 + 차 대표 이미지)
   async function sign(path: string | null) {
     if (!path) return null;
     const { data } = await admin.storage
@@ -49,8 +49,16 @@ export async function GET(
       .createSignedUrl(path, 3600);
     return data?.signedUrl ?? null;
   }
-  const [logPhoto, teaImage] = await Promise.all([
-    sign(log.photo_url),
+  const photoSources =
+    log.photo_paths && log.photo_paths.length > 0
+      ? log.photo_paths
+      : log.photo_url
+        ? [log.photo_url]
+        : [];
+  const [images, teaImage] = await Promise.all([
+    Promise.all(photoSources.map(sign)).then((arr) =>
+      arr.filter((u): u is string => !!u),
+    ),
     sign(tea?.image_url ?? null),
   ]);
 
@@ -71,7 +79,7 @@ export async function GET(
   }
 
   return NextResponse.json({
-    log: { ...log, photo_url: logPhoto },
+    log: { ...log, images },
     tea: tea ? { ...tea, image_url: teaImage } : null,
     author: profile?.display_name ?? null,
     liked_by_me: likedByMe,
