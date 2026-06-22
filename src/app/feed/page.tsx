@@ -66,7 +66,7 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
           onClick={(e) => {
             e.preventDefault();
             if (!isAuthed) {
-              router.push("/login?next=/explore");
+              router.push("/login?next=/feed");
               return;
             }
             like.mutate(item.liked_by_me);
@@ -90,8 +90,8 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
   );
 }
 
-/** 탐색 — 공개 기록 피드 */
-export default function ExplorePage() {
+/** 피드 — 공개 기록 모음 */
+export default function FeedPage() {
   const { data, isLoading, isError } = useFeed();
   const items = data?.items;
   const isAuthed = data?.is_authed ?? false;
@@ -100,7 +100,7 @@ export default function ExplorePage() {
     <PhoneFrame scroll={false}>
       <div className="relative flex min-h-0 flex-1 flex-col">
         <header className="px-6 pt-14 pb-3">
-          <h1 className="text-[24px] font-black text-brand-ink">탐색</h1>
+          <h1 className="text-[24px] font-black text-brand-ink">피드</h1>
           <p className="mt-0.5 text-[14px] text-ink-muted">
             다른 사람들의 차 기록을 둘러봐요 🍃
           </p>
@@ -143,7 +143,7 @@ export default function ExplorePage() {
           )}
         </div>
 
-        <BottomNav active="explore" />
+        <BottomNav active="feed" />
       </div>
     </PhoneFrame>
   );

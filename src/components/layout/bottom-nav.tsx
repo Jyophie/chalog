@@ -1,15 +1,16 @@
 import Link from "next/link";
-import { Archive, Camera, Compass, UserRound } from "lucide-react";
+import { Archive, Camera, Newspaper, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Tab = "explore" | "archive" | "upload" | "my";
+type Tab = "feed" | "archive" | "upload" | "my";
 
-const TABS: { key: Tab; href: string; label: string; icon: typeof Compass }[] = [
-  { key: "explore", href: "/explore", label: "탐색", icon: Compass },
-  { key: "archive", href: "/archive", label: "아카이브", icon: Archive },
-  { key: "upload", href: "/upload", label: "등록", icon: Camera },
-  { key: "my", href: "/my", label: "내 정보", icon: UserRound },
-];
+const TABS: { key: Tab; href: string; label: string; icon: typeof Newspaper }[] =
+  [
+    { key: "feed", href: "/feed", label: "피드", icon: Newspaper },
+    { key: "archive", href: "/archive", label: "아카이브", icon: Archive },
+    { key: "upload", href: "/upload", label: "등록", icon: Camera },
+    { key: "my", href: "/my", label: "내 정보", icon: UserRound },
+  ];
 
 /** 메인 하단 내비게이션 (PhoneFrame scroll={false} 안에서 absolute 오버레이) */
 export function BottomNav({ active }: { active: Tab }) {
