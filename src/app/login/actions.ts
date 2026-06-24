@@ -7,6 +7,22 @@ import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = { error?: string; message?: string };
 
+/**
+ * 인증 리디렉션용 절대 origin 계산.
+ * 서버 액션에서는 origin 헤더가 비어 있을 수 있으므로
+ * NEXT_PUBLIC_SITE_URL → origin → x-forwarded-host(Vercel) → host 순으로 확정.
+ */
+async function getOrigin(): Promise<string> {
+  const env = process.env.NEXT_PUBLIC_SITE_URL;
+  if (env) return env.replace(/\/$/, "");
+  const h = await headers();
+  const origin = h.get("origin");
+  if (origin) return origin;
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  return host ? `${proto}://${host}` : "";
+}
+
 function safeNext(next: FormDataEntryValue | null): string {
   const n = typeof next === "string" ? next : "";
   return n.startsWith("/") ? n : "/feed";
@@ -50,7 +66,7 @@ export async function signUp(
   if (password !== passwordConfirm)
     return { error: "비밀번호가 일치하지 않아요." };
 
-  const origin = (await headers()).get("origin") ?? "";
+  const origin = await getOrigin();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -85,7 +101,7 @@ export async function requestPasswordReset(
   const email = String(formData.get("email") ?? "").trim();
   if (!EMAIL_RE.test(email)) return { error: "이메일 형식을 확인해주세요." };
 
-  const origin = (await headers()).get("origin") ?? "";
+  const origin = await getOrigin();
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback?next=/reset-password`,
@@ -125,7 +141,7 @@ export async function updatePassword(
 
 export async function signInWithGoogle(formData: FormData): Promise<void> {
   const next = safeNext(formData.get("next"));
-  const origin = (await headers()).get("origin") ?? "";
+  const origin = await getOrigin();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
