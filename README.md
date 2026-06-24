@@ -37,13 +37,9 @@
 
 ## 📸 화면
 
-| 피드 | 공개 기록 상세 | 아카이브 |
-|---|---|---|
-| ![피드](docs/screenshots/feed.png) | ![상세](docs/screenshots/detail.png) | ![아카이브](docs/screenshots/archive.png) |
-
-| 브루잉 가이드 · 타이머 | 작성자 프로필 | 랜딩 |
-|---|---|---|
-| ![가이드](docs/screenshots/guide.png) | ![프로필](docs/screenshots/profile.png) | ![랜딩](docs/screenshots/landing.png) |
+| 차 등록 (AI) | 브루잉 가이드 · 타이머 | 아카이브 | 작성자 프로필 |
+|---|---|---|---|
+| ![차 등록](docs/screenshots/upload.png) | ![브루잉 가이드](docs/screenshots/guide.png) | ![아카이브](docs/screenshots/archive.png) | ![작성자 프로필](docs/screenshots/profile.png) |
 
 ## 🛠 기술 스택
 
