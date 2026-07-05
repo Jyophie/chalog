@@ -11,6 +11,8 @@ import { TabHeader } from "@/components/layout/tab-header";
 import { NotificationBell } from "@/components/notification-bell";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { Avatar } from "@/components/ui/avatar";
+import { Chip } from "@/components/ui/chip";
+import { TEA_CATEGORIES } from "@/lib/schemas/tea";
 import { cn } from "@/lib/utils";
 
 function LeafRating({ value }: { value: number }) {
@@ -184,6 +186,7 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
 /** 피드 — 공개 기록 모음 */
 export default function FeedPage() {
   const [scope, setScope] = useState<"all" | "following">("all");
+  const [category, setCategory] = useState<string>("전체");
   const {
     data,
     isLoading,
@@ -191,7 +194,7 @@ export default function FeedPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useFeed(scope);
+  } = useFeed(scope, category === "전체" ? undefined : category);
   const items = data?.pages.flatMap((p) => p.items);
   const isAuthed = data?.pages[0]?.is_authed ?? false;
 
@@ -240,6 +243,20 @@ export default function FeedPage() {
             </div>
           )}
 
+          {/* 차 종류 필터 */}
+          <div className="-mx-6 mb-4 flex gap-2 overflow-x-auto px-6 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {["전체", ...TEA_CATEGORIES].map((c) => (
+              <Chip
+                key={c}
+                selected={category === c}
+                onClick={() => setCategory(c)}
+                className="shrink-0"
+              >
+                {c}
+              </Chip>
+            ))}
+          </div>
+
           {isLoading && (
             <div className="flex flex-col gap-4">
               {[0, 1].map((i) => (
@@ -257,23 +274,26 @@ export default function FeedPage() {
             </p>
           )}
 
-          {items && items.length === 0 && scope === "all" && (
+          {items && items.length === 0 && (
             <div className="mt-16 flex flex-col items-center gap-3 text-center">
-              <span className="text-5xl">🍵</span>
+              <span className="text-5xl">
+                {scope === "following" ? "👀" : "🍵"}
+              </span>
               <p className="text-[14px] text-ink-muted">
-                아직 공개된 기록이 없어요.
-                <br />첫 공개 기록의 주인공이 되어보세요!
-              </p>
-            </div>
-          )}
-
-          {items && items.length === 0 && scope === "following" && (
-            <div className="mt-16 flex flex-col items-center gap-3 text-center">
-              <span className="text-5xl">👀</span>
-              <p className="text-[14px] text-ink-muted">
-                팔로우한 사람의 공개 기록이 여기 모여요.
-                <br />
-                마음에 드는 기록의 작성자를 팔로우해보세요.
+                {scope === "following" ? (
+                  <>
+                    팔로우한 사람의 공개 기록이 여기 모여요.
+                    <br />
+                    마음에 드는 기록의 작성자를 팔로우해보세요.
+                  </>
+                ) : category !== "전체" ? (
+                  <>‘{category}’ 공개 기록이 아직 없어요.</>
+                ) : (
+                  <>
+                    아직 공개된 기록이 없어요.
+                    <br />첫 공개 기록의 주인공이 되어보세요!
+                  </>
+                )}
               </p>
             </div>
           )}

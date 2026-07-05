@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { TeaCategory } from "@/lib/types/database";
 
 const PAGE = 30;
 
@@ -9,6 +10,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor"); // created_at ISO
   const scope = searchParams.get("scope"); // "following" | null
+  const category = searchParams.get("category"); // 차 종류 필터
 
   const supabase = await createClient();
   const {
@@ -33,6 +35,23 @@ export async function GET(request: Request) {
     }
   }
 
+  // 차 종류 필터: 해당 종류의 차 id 목록으로 제한
+  let categoryTeaIds: string[] | null = null;
+  if (category) {
+    const { data: catTeas } = await admin
+      .from("teas")
+      .select("id")
+      .eq("tea_category", category as TeaCategory);
+    categoryTeaIds = (catTeas ?? []).map((t) => t.id);
+    if (categoryTeaIds.length === 0) {
+      return NextResponse.json({
+        items: [],
+        nextCursor: null,
+        is_authed: !!user,
+      });
+    }
+  }
+
   let q = admin
     .from("tea_logs")
     .select(
@@ -42,6 +61,7 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false })
     .limit(PAGE);
   if (followingIds) q = q.in("user_id", followingIds);
+  if (categoryTeaIds) q = q.in("tea_id", categoryTeaIds);
   if (cursor) q = q.lt("created_at", cursor);
 
   const { data: logs, error } = await q;

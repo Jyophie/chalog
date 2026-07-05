@@ -77,13 +77,17 @@ export interface FeedResponse {
   is_authed: boolean;
 }
 
-export function useFeed(scope: "all" | "following" = "all") {
+export function useFeed(
+  scope: "all" | "following" = "all",
+  category?: string,
+) {
   return useInfiniteQuery({
-    queryKey: ["feed", scope],
+    queryKey: ["feed", scope, category ?? "all"],
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams();
       if (pageParam) params.set("cursor", pageParam);
       if (scope === "following") params.set("scope", "following");
+      if (category) params.set("category", category);
       const qs = params.toString();
       return fetchJson<FeedResponse>(`/api/feed${qs ? `?${qs}` : ""}`);
     },
