@@ -14,6 +14,7 @@ const PROTECTED_PREFIXES = [
   "/log",
   "/my",
   "/notifications",
+  "/admin",
 ];
 
 /**

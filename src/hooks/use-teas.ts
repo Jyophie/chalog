@@ -303,6 +303,46 @@ export function useMarkNotificationsRead() {
   });
 }
 
+export interface AdminReportItem {
+  id: string;
+  target_type: "log" | "comment";
+  target_id: string;
+  reason: string;
+  created_at: string;
+  reporter: string | null;
+  log_id: string | null;
+  is_public: boolean | null;
+  tea_name: string | null;
+  comment_body: string | null;
+  exists: boolean;
+}
+
+/** 운영자: 신고 목록 */
+export function useAdminReports() {
+  return useQuery({
+    queryKey: ["admin-reports"],
+    queryFn: () => fetchJson<{ items: AdminReportItem[] }>("/api/admin/reports"),
+    retry: false,
+  });
+}
+
+/** 운영자: 신고 처리 (hide=콘텐츠 숨김/삭제, dismiss=무시) */
+export function useResolveReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { report_id: string; action: "hide" | "dismiss" }) =>
+      fetchJson("/api/admin/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(v),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-reports"] });
+      qc.invalidateQueries({ queryKey: ["feed"] });
+    },
+  });
+}
+
 export interface EditableLog {
   log: LogRow;
   photos: { path: string; url: string }[];

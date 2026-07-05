@@ -10,6 +10,7 @@ import {
   LogOut,
   Pencil,
   Shield,
+  ShieldAlert,
 } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import {
@@ -38,12 +39,14 @@ export function MyClient({
   email,
   displayName,
   avatarUrl,
+  isAdmin,
   joinedAt,
   urlError,
 }: {
   email: string;
   displayName: string;
   avatarUrl: string | null;
+  isAdmin?: boolean;
   joinedAt: string | null;
   urlError?: string;
 }) {
@@ -273,6 +276,20 @@ export function MyClient({
             </form>
           )}
         </div>
+
+        {/* 운영자: 신고 관리 */}
+        {isAdmin && (
+          <Link
+            href="/admin/reports"
+            className="mt-3 flex items-center gap-3 rounded-[20px] border border-hairline bg-field px-4 py-3.5 shadow-[0px_2px_6px_rgba(30,60,35,0.05)] transition-colors hover:bg-tint-green/30"
+          >
+            <ShieldAlert className="size-[18px] text-brand" />
+            <span className="flex-1 text-[14px] font-semibold text-brand-ink">
+              신고 관리
+            </span>
+            <ChevronRight className="size-4 text-ink-muted" />
+          </Link>
+        )}
 
         {/* 로그아웃 */}
         <form action={signOut} className="mt-3">

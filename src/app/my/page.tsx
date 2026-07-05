@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/admin";
 import { MyClient } from "./my-client";
 
 /** 내 정보 (프로필 · 로그아웃 · 탈퇴) */
@@ -26,6 +27,7 @@ export default async function MyPage({
       email={user.email ?? ""}
       displayName={profile?.display_name ?? ""}
       avatarUrl={profile?.avatar_url ?? null}
+      isAdmin={isAdminEmail(user.email)}
       joinedAt={profile?.created_at ?? null}
       urlError={sp.error === "delete" ? "탈퇴 처리에 실패했어요. 다시 시도해주세요." : undefined}
     />
