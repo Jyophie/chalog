@@ -2,8 +2,10 @@
 
 import {
   useQuery,
+  useInfiniteQuery,
   useMutation,
   useQueryClient,
+  type InfiniteData,
 } from "@tanstack/react-query";
 import type {
   Database,
@@ -76,9 +78,14 @@ export interface FeedResponse {
 }
 
 export function useFeed() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["feed"],
-    queryFn: () => fetchJson<FeedResponse>("/api/feed"),
+    queryFn: ({ pageParam }) =>
+      fetchJson<FeedResponse>(
+        `/api/feed${pageParam ? `?cursor=${encodeURIComponent(pageParam)}` : ""}`,
+      ),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => last.nextCursor,
   });
 }
 
@@ -150,7 +157,7 @@ export function useToggleLike(logId: string) {
       await qc.cancelQueries({ queryKey: ["public-log", logId] });
       await qc.cancelQueries({ queryKey: ["feed"] });
       const prevPublic = qc.getQueryData<PublicLogDetail>(["public-log", logId]);
-      const prevFeed = qc.getQueryData<FeedResponse>(["feed"]);
+      const prevFeed = qc.getQueryData<InfiniteData<FeedResponse>>(["feed"]);
       const delta = liked ? -1 : 1;
       if (prevPublic) {
         qc.setQueryData<PublicLogDetail>(["public-log", logId], {
@@ -163,17 +170,20 @@ export function useToggleLike(logId: string) {
         });
       }
       if (prevFeed) {
-        qc.setQueryData<FeedResponse>(["feed"], {
+        qc.setQueryData<InfiniteData<FeedResponse>>(["feed"], {
           ...prevFeed,
-          items: prevFeed.items.map((it) =>
-            it.id === logId
-              ? {
-                  ...it,
-                  liked_by_me: !liked,
-                  like_count: Math.max(0, it.like_count + delta),
-                }
-              : it,
-          ),
+          pages: prevFeed.pages.map((pg) => ({
+            ...pg,
+            items: pg.items.map((it) =>
+              it.id === logId
+                ? {
+                    ...it,
+                    liked_by_me: !liked,
+                    like_count: Math.max(0, it.like_count + delta),
+                  }
+                : it,
+            ),
+          })),
         });
       }
       return { prevPublic, prevFeed };

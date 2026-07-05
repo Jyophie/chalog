@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Heart, Leaf, MessageCircle } from "lucide-react";
@@ -182,9 +182,31 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
 
 /** 피드 — 공개 기록 모음 */
 export default function FeedPage() {
-  const { data, isLoading, isError } = useFeed();
-  const items = data?.items;
-  const isAuthed = data?.is_authed ?? false;
+  const {
+    data,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useFeed();
+  const items = data?.pages.flatMap((p) => p.items);
+  const isAuthed = data?.pages[0]?.is_authed ?? false;
+
+  // 무한스크롤 센티넬
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasNextPage) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
+      },
+      { rootMargin: "400px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <PhoneFrame scroll={false}>
@@ -225,6 +247,19 @@ export default function FeedPage() {
                 <FeedCard key={item.id} item={item} isAuthed={isAuthed} />
               ))}
             </div>
+          )}
+
+          {/* 무한스크롤 트리거 */}
+          <div ref={sentinelRef} className="h-1" />
+          {isFetchingNextPage && (
+            <p className="py-6 text-center text-[13px] text-ink-muted">
+              불러오는 중…
+            </p>
+          )}
+          {items && items.length > 0 && !hasNextPage && (
+            <p className="py-6 text-center text-[12px] text-ink-muted">
+              마지막 기록까지 봤어요 🍃
+            </p>
           )}
         </div>
 
