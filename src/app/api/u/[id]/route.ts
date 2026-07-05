@@ -71,11 +71,37 @@ export async function GET(
     data: { user },
   } = await supabase.auth.getUser();
 
+  // 팔로워/팔로잉 수 + 내 팔로우 여부
+  const [{ count: followerCount }, { count: followingCount }] =
+    await Promise.all([
+      admin
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", id),
+      admin
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_id", id),
+    ]);
+  let isFollowing = false;
+  if (user && user.id !== id) {
+    const { data: f } = await admin
+      .from("follows")
+      .select("follower_id")
+      .eq("follower_id", user.id)
+      .eq("following_id", id)
+      .maybeSingle();
+    isFollowing = !!f;
+  }
+
   return NextResponse.json({
     author: profile?.display_name ?? null,
     avatar: profile?.avatar_url ?? null,
     items,
     count: items.length,
+    follower_count: followerCount ?? 0,
+    following_count: followingCount ?? 0,
+    is_following: isFollowing,
     is_me: !!user && user.id === id,
     is_authed: !!user,
   });

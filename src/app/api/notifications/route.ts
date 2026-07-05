@@ -29,8 +29,10 @@ export async function GET() {
     : { data: [] };
   const actorById = new Map((actors ?? []).map((a) => [a.id, a]));
 
-  // 기록 → 차 이름
-  const logIds = [...new Set(list.map((n) => n.log_id))];
+  // 기록 → 차 이름 (follow 알림은 log_id 없음)
+  const logIds = [...new Set(list.map((n) => n.log_id))].filter(
+    (x): x is string => !!x,
+  );
   const { data: logs } = logIds.length
     ? await admin.from("tea_logs").select("id, tea_id").in("id", logIds)
     : { data: [] };
@@ -52,13 +54,14 @@ export async function GET() {
 
   const items = list.map((n) => {
     const actor = actorById.get(n.actor_id);
-    const teaId = teaIdByLog.get(n.log_id);
+    const teaId = n.log_id ? teaIdByLog.get(n.log_id) : undefined;
     return {
       id: n.id,
       type: n.type,
       read: n.read,
       created_at: n.created_at,
       log_id: n.log_id,
+      actor_id: n.actor_id,
       actor: actor?.display_name ?? null,
       actor_avatar: actor?.avatar_url ?? null,
       tea_name: teaId ? (teaNameById.get(teaId) ?? null) : null,

@@ -8,6 +8,7 @@ const PAGE = 30;
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor"); // created_at ISO
+  const scope = searchParams.get("scope"); // "following" | null
 
   const supabase = await createClient();
   const {
@@ -15,14 +16,32 @@ export async function GET(request: Request) {
   } = await supabase.auth.getUser();
 
   const admin = createAdminClient();
+
+  // 팔로잉 피드: 내가 팔로우한 작성자들의 공개 기록만
+  let followingIds: string[] | null = null;
+  if (scope === "following") {
+    if (!user) {
+      return NextResponse.json({ items: [], nextCursor: null, is_authed: false });
+    }
+    const { data: fol } = await admin
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", user.id);
+    followingIds = (fol ?? []).map((f) => f.following_id);
+    if (followingIds.length === 0) {
+      return NextResponse.json({ items: [], nextCursor: null, is_authed: true });
+    }
+  }
+
   let q = admin
     .from("tea_logs")
     .select(
-      "id, tea_id, brewed_at, photo_url, photo_paths, water_temperature, steeping_time, tea_amount, tool, taste_memo, aroma_memo, next_adjustment, rating, like_count, comment_count, created_at",
+      "id, tea_id, user_id, brewed_at, photo_url, photo_paths, water_temperature, steeping_time, tea_amount, tool, taste_memo, aroma_memo, next_adjustment, rating, like_count, comment_count, created_at",
     )
     .eq("is_public", true)
     .order("created_at", { ascending: false })
     .limit(PAGE);
+  if (followingIds) q = q.in("user_id", followingIds);
   if (cursor) q = q.lt("created_at", cursor);
 
   const { data: logs, error } = await q;

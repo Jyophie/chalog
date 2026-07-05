@@ -183,6 +183,7 @@ function FeedCard({ item, isAuthed }: { item: FeedItem; isAuthed: boolean }) {
 
 /** 피드 — 공개 기록 모음 */
 export default function FeedPage() {
+  const [scope, setScope] = useState<"all" | "following">("all");
   const {
     data,
     isLoading,
@@ -190,7 +191,7 @@ export default function FeedPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useFeed();
+  } = useFeed(scope);
   const items = data?.pages.flatMap((p) => p.items);
   const isAuthed = data?.pages[0]?.is_authed ?? false;
 
@@ -219,6 +220,26 @@ export default function FeedPage() {
         />
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-28 pt-1">
+          {isAuthed && (
+            <div className="mb-4 flex gap-1 rounded-[14px] bg-track p-1">
+              {(["all", "following"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setScope(s)}
+                  className={cn(
+                    "flex-1 rounded-[10px] py-2 text-[13px] font-bold transition-colors",
+                    scope === s
+                      ? "bg-field text-brand-ink shadow-[0px_1px_3px_rgba(30,60,35,0.1)]"
+                      : "text-ink-muted",
+                  )}
+                >
+                  {s === "all" ? "전체" : "팔로잉"}
+                </button>
+              ))}
+            </div>
+          )}
+
           {isLoading && (
             <div className="flex flex-col gap-4">
               {[0, 1].map((i) => (
@@ -236,12 +257,23 @@ export default function FeedPage() {
             </p>
           )}
 
-          {items && items.length === 0 && (
+          {items && items.length === 0 && scope === "all" && (
             <div className="mt-16 flex flex-col items-center gap-3 text-center">
               <span className="text-5xl">🍵</span>
               <p className="text-[14px] text-ink-muted">
                 아직 공개된 기록이 없어요.
                 <br />첫 공개 기록의 주인공이 되어보세요!
+              </p>
+            </div>
+          )}
+
+          {items && items.length === 0 && scope === "following" && (
+            <div className="mt-16 flex flex-col items-center gap-3 text-center">
+              <span className="text-5xl">👀</span>
+              <p className="text-[14px] text-ink-muted">
+                팔로우한 사람의 공개 기록이 여기 모여요.
+                <br />
+                마음에 드는 기록의 작성자를 팔로우해보세요.
               </p>
             </div>
           )}

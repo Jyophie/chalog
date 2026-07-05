@@ -2,17 +2,27 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Heart, Images, MessageCircle } from "lucide-react";
-import { useUserProfile } from "@/hooks/use-teas";
+import { Heart, Images, MessageCircle, UserPlus } from "lucide-react";
+import { useUserProfile, useToggleFollow } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { TopBar } from "@/components/layout/top-bar";
 import { Avatar } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+
+function Stat({ n, label }: { n: number; label: string }) {
+  return (
+    <span className="text-[13px] text-ink-muted">
+      <b className="font-black text-brand-ink">{n}</b> {label}
+    </span>
+  );
+}
 
 /** 작성자 공개 프로필 (id = user id, 읽기 전용·비로그인 포함) */
 export default function UserProfilePage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, isError } = useUserProfile(id);
+  const follow = useToggleFollow(id);
 
   const name = data?.author || "차 애호가";
 
@@ -29,7 +39,7 @@ export default function UserProfilePage() {
             className="size-16"
             fontClassName="text-[24px]"
           />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="truncate text-[20px] font-black text-brand-ink">
               {name}
               {data?.is_me && (
@@ -38,11 +48,31 @@ export default function UserProfilePage() {
                 </span>
               )}
             </h1>
-            <p className="mt-0.5 text-[13px] text-ink-muted">
-              공개 기록 {data?.count ?? 0}개
-            </p>
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+              <Stat n={data?.count ?? 0} label="기록" />
+              <Stat n={data?.follower_count ?? 0} label="팔로워" />
+              <Stat n={data?.following_count ?? 0} label="팔로잉" />
+            </div>
           </div>
         </div>
+
+        {/* 팔로우 버튼 (로그인 · 본인 아님) */}
+        {data && data.is_authed && !data.is_me && (
+          <button
+            type="button"
+            onClick={() => follow.mutate(data.is_following)}
+            disabled={follow.isPending}
+            className={cn(
+              "mt-4 flex w-full items-center justify-center gap-1.5 rounded-pill py-3 text-[14px] font-bold transition-colors disabled:opacity-60",
+              data.is_following
+                ? "border border-hairline bg-field text-brand-ink"
+                : "bg-brand text-white shadow-brand hover:bg-brand-dark",
+            )}
+          >
+            {!data.is_following && <UserPlus className="size-4" />}
+            {data.is_following ? "팔로잉" : "팔로우"}
+          </button>
+        )}
 
         {/* 기록 그리드 */}
         <div className="mt-6">

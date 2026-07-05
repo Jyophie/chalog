@@ -77,13 +77,16 @@ export interface FeedResponse {
   is_authed: boolean;
 }
 
-export function useFeed() {
+export function useFeed(scope: "all" | "following" = "all") {
   return useInfiniteQuery({
-    queryKey: ["feed"],
-    queryFn: ({ pageParam }) =>
-      fetchJson<FeedResponse>(
-        `/api/feed${pageParam ? `?cursor=${encodeURIComponent(pageParam)}` : ""}`,
-      ),
+    queryKey: ["feed", scope],
+    queryFn: ({ pageParam }) => {
+      const params = new URLSearchParams();
+      if (pageParam) params.set("cursor", pageParam);
+      if (scope === "following") params.set("scope", "following");
+      const qs = params.toString();
+      return fetchJson<FeedResponse>(`/api/feed${qs ? `?${qs}` : ""}`);
+    },
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
   });
@@ -127,6 +130,9 @@ export interface UserProfile {
   avatar: string | null;
   items: ProfileItem[];
   count: number;
+  follower_count: number;
+  following_count: number;
+  is_following: boolean;
   is_me: boolean;
   is_authed: boolean;
 }
@@ -136,6 +142,39 @@ export function useUserProfile(id: string) {
     queryKey: ["user", id],
     queryFn: () => fetchJson<UserProfile>(`/api/u/${id}`),
     enabled: !!id,
+  });
+}
+
+/** 팔로우/언팔로우 토글 (프로필 낙관적 업데이트 + 팔로잉 피드 무효화) */
+export function useToggleFollow(userId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (following: boolean) =>
+      fetchJson(`/api/u/${userId}/follow`, {
+        method: following ? "DELETE" : "POST",
+      }),
+    onMutate: async (following) => {
+      await qc.cancelQueries({ queryKey: ["user", userId] });
+      const prev = qc.getQueryData<UserProfile>(["user", userId]);
+      if (prev) {
+        qc.setQueryData<UserProfile>(["user", userId], {
+          ...prev,
+          is_following: !following,
+          follower_count: Math.max(
+            0,
+            prev.follower_count + (following ? -1 : 1),
+          ),
+        });
+      }
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(["user", userId], ctx.prev);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["user", userId] });
+      qc.invalidateQueries({ queryKey: ["feed", "following"] });
+    },
   });
 }
 
@@ -157,7 +196,9 @@ export function useToggleLike(logId: string) {
       await qc.cancelQueries({ queryKey: ["public-log", logId] });
       await qc.cancelQueries({ queryKey: ["feed"] });
       const prevPublic = qc.getQueryData<PublicLogDetail>(["public-log", logId]);
-      const prevFeed = qc.getQueryData<InfiniteData<FeedResponse>>(["feed"]);
+      const prevFeeds = qc.getQueriesData<InfiniteData<FeedResponse>>({
+        queryKey: ["feed"],
+      });
       const delta = liked ? -1 : 1;
       if (prevPublic) {
         qc.setQueryData<PublicLogDetail>(["public-log", logId], {
@@ -169,29 +210,33 @@ export function useToggleLike(logId: string) {
           },
         });
       }
-      if (prevFeed) {
-        qc.setQueryData<InfiniteData<FeedResponse>>(["feed"], {
-          ...prevFeed,
-          pages: prevFeed.pages.map((pg) => ({
-            ...pg,
-            items: pg.items.map((it) =>
-              it.id === logId
-                ? {
-                    ...it,
-                    liked_by_me: !liked,
-                    like_count: Math.max(0, it.like_count + delta),
-                  }
-                : it,
-            ),
-          })),
-        });
-      }
-      return { prevPublic, prevFeed };
+      qc.setQueriesData<InfiniteData<FeedResponse>>(
+        { queryKey: ["feed"] },
+        (old) =>
+          old
+            ? {
+                ...old,
+                pages: old.pages.map((pg) => ({
+                  ...pg,
+                  items: pg.items.map((it) =>
+                    it.id === logId
+                      ? {
+                          ...it,
+                          liked_by_me: !liked,
+                          like_count: Math.max(0, it.like_count + delta),
+                        }
+                      : it,
+                  ),
+                })),
+              }
+            : old,
+      );
+      return { prevPublic, prevFeeds };
     },
     onError: (_e, _v, ctx) => {
       if (ctx?.prevPublic)
         qc.setQueryData(["public-log", logId], ctx.prevPublic);
-      if (ctx?.prevFeed) qc.setQueryData(["feed"], ctx.prevFeed);
+      ctx?.prevFeeds?.forEach(([key, data]) => qc.setQueryData(key, data));
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ["public-log", logId] });
@@ -219,10 +264,11 @@ export function useToggleLogPublic(teaId: string) {
 
 export interface NotificationItem {
   id: string;
-  type: "like" | "comment" | "reply";
+  type: "like" | "comment" | "reply" | "follow";
   read: boolean;
   created_at: string;
-  log_id: string;
+  log_id: string | null;
+  actor_id: string;
   actor: string | null;
   actor_avatar: string | null;
   tea_name: string | null;

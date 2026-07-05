@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Heart, MessageCircle, Reply } from "lucide-react";
+import { Heart, MessageCircle, Reply, UserPlus } from "lucide-react";
 import {
   useNotifications,
   useMarkNotificationsRead,
@@ -29,13 +29,20 @@ function line(n: NotificationItem) {
   const tea = n.tea_name ? `‘${n.tea_name}’ ` : "";
   if (n.type === "like") return `${who}님이 ${tea}기록을 좋아해요`;
   if (n.type === "comment") return `${who}님이 ${tea}기록에 댓글을 남겼어요`;
+  if (n.type === "follow") return `${who}님이 회원님을 팔로우해요`;
   return `${who}님이 회원님의 댓글에 답글을 남겼어요`;
+}
+
+function href(n: NotificationItem) {
+  if (n.type === "follow") return `/u/${n.actor_id}`;
+  return n.log_id ? `/p/${n.log_id}` : `/u/${n.actor_id}`;
 }
 
 function TypeIcon({ type }: { type: NotificationItem["type"] }) {
   if (type === "like")
     return <Heart className="size-3.5 fill-[#d4714a] text-[#d4714a]" />;
   if (type === "comment") return <MessageCircle className="size-3.5 text-brand" />;
+  if (type === "follow") return <UserPlus className="size-3.5 text-brand" />;
   return <Reply className="size-3.5 text-brand" />;
 }
 
@@ -77,7 +84,7 @@ export default function NotificationsPage() {
           {items.map((n) => (
             <li key={n.id}>
               <Link
-                href={`/p/${n.log_id}`}
+                href={href(n)}
                 className={cn(
                   "flex items-center gap-3 rounded-[14px] px-3 py-3 transition-colors hover:bg-tint-green/30",
                   !n.read && "bg-tint-green/40",
