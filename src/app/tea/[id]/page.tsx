@@ -22,6 +22,7 @@ import {
   useDeleteTea,
   useToggleFavorite,
   useToggleLogPublic,
+  useDeleteLog,
 } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BrewTimer, derivePours } from "@/components/brew-timer";
@@ -86,6 +87,8 @@ export default function TeaDetailPage() {
   const del = useDeleteTea();
   const fav = useToggleFavorite();
   const togglePublic = useToggleLogPublic(id);
+  const delLog = useDeleteLog(id);
+  const [deletingLog, setDeletingLog] = useState<string | null>(null);
   const [tab, setTab] = useState<"guide" | "logs">("guide");
 
   if (isLoading) {
@@ -369,21 +372,70 @@ export default function TeaDetailPage() {
                           )}
                           {log.is_public ? "피드 공개 중" : "비공개"}
                         </button>
-                        {log.is_public && (
+                        <div className="flex items-center gap-1">
+                          {log.is_public && (
+                            <Link
+                              href={`/p/${log.id}`}
+                              className="mr-2 flex items-center gap-3 text-[12px] font-semibold text-ink-muted"
+                            >
+                              <span className="flex items-center gap-1">
+                                <Heart className="size-3.5" />
+                                {log.like_count}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageCircle className="size-3.5" />
+                                {log.comment_count}
+                              </span>
+                            </Link>
+                          )}
                           <Link
-                            href={`/p/${log.id}`}
-                            className="flex items-center gap-3 text-[12px] font-semibold text-ink-muted"
+                            href={`/tea/${id}/log?edit=${log.id}`}
+                            aria-label="기록 수정"
+                            className="grid size-8 place-items-center rounded-full text-ink-muted transition-colors hover:bg-track hover:text-brand-ink"
                           >
-                            <span className="flex items-center gap-1">
-                              <Heart className="size-3.5" />
-                              {log.like_count}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MessageCircle className="size-3.5" />
-                              {log.comment_count}
-                            </span>
+                            <Pencil className="size-4" />
                           </Link>
-                        )}
+                          <button
+                            type="button"
+                            aria-label="기록 삭제"
+                            onClick={() => setDeletingLog(log.id)}
+                            className="grid size-8 place-items-center rounded-full text-ink-muted transition-colors hover:bg-track hover:text-red-500"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {deletingLog === log.id && (
+                      <div className="mt-3 rounded-[14px] border border-red-200 bg-red-50/60 p-3">
+                        <p className="text-[13px] font-bold text-red-600">
+                          이 기록을 삭제할까요?
+                        </p>
+                        <p className="mt-1 text-[12px] text-red-500/90">
+                          사진·좋아요·댓글이 함께 삭제되며 되돌릴 수 없어요.
+                        </p>
+                        <div className="mt-2.5 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setDeletingLog(null)}
+                            className="flex-1 rounded-pill border border-hairline bg-field py-2 text-[13px] font-bold text-brand-ink"
+                          >
+                            취소
+                          </button>
+                          <button
+                            type="button"
+                            disabled={delLog.isPending}
+                            onClick={() =>
+                              delLog.mutate(log.id, {
+                                onSuccess: () => setDeletingLog(null),
+                              })
+                            }
+                            className="flex-1 rounded-pill bg-red-500 py-2 text-[13px] font-bold text-white transition-colors hover:bg-red-600 disabled:opacity-60"
+                          >
+                            {delLog.isPending ? "삭제 중…" : "삭제"}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </li>

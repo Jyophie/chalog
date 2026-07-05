@@ -207,6 +207,54 @@ export function useToggleLogPublic(teaId: string) {
   });
 }
 
+export interface EditableLog {
+  log: LogRow;
+  photos: { path: string; url: string }[];
+}
+
+/** 편집용 기록 조회 (본인) */
+export function useLogForEdit(logId: string) {
+  return useQuery({
+    queryKey: ["edit-log", logId],
+    queryFn: () => fetchJson<EditableLog>(`/api/logs/${logId}`),
+    enabled: !!logId,
+    staleTime: 0,
+  });
+}
+
+/** 기록 수정 (본인) */
+export function useUpdateLog(teaId: string, logId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: object) =>
+      fetchJson(`/api/logs/${logId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tea", teaId] });
+      qc.invalidateQueries({ queryKey: ["public-log", logId] });
+      qc.invalidateQueries({ queryKey: ["edit-log", logId] });
+      qc.invalidateQueries({ queryKey: ["feed"] });
+    },
+  });
+}
+
+/** 기록 삭제 (본인) */
+export function useDeleteLog(teaId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (logId: string) =>
+      fetchJson(`/api/logs/${logId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tea", teaId] });
+      qc.invalidateQueries({ queryKey: ["feed"] });
+      qc.invalidateQueries({ queryKey: ["teas"] });
+    },
+  });
+}
+
 export interface CommentItem {
   id: string;
   body: string;

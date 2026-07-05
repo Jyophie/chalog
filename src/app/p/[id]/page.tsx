@@ -3,10 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Heart, Leaf, MessageCircle, Send, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Heart,
+  Leaf,
+  MessageCircle,
+  Pencil,
+  Send,
+  Trash2,
+} from "lucide-react";
 import {
   usePublicLog,
   useToggleLike,
+  useDeleteLog,
   useComments,
   useAddComment,
   useDeleteComment,
@@ -230,6 +239,8 @@ export default function PublicLogPage() {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, isError } = usePublicLog(id);
   const like = useToggleLike(id);
+  const delLog = useDeleteLog(data?.tea?.id ?? "");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (isLoading) {
     return (
@@ -394,6 +405,58 @@ export default function PublicLogPage() {
             </p>
           )}
         </div>
+
+        {/* 소유자: 수정 / 삭제 */}
+        {data.is_owner && tea && (
+          <div className="mt-3">
+            <div className="flex items-center justify-end gap-1">
+              <Link
+                href={`/tea/${tea.id}/log?edit=${id}`}
+                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-semibold text-ink-muted transition-colors hover:bg-track hover:text-brand-ink"
+              >
+                <Pencil className="size-3.5" /> 수정
+              </Link>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-semibold text-ink-muted transition-colors hover:bg-track hover:text-red-500"
+              >
+                <Trash2 className="size-3.5" /> 삭제
+              </button>
+            </div>
+            {confirmDelete && (
+              <div className="mt-2 rounded-[14px] border border-red-200 bg-red-50/60 p-3">
+                <p className="text-[13px] font-bold text-red-600">
+                  이 기록을 삭제할까요?
+                </p>
+                <p className="mt-1 text-[12px] text-red-500/90">
+                  사진·좋아요·댓글이 함께 삭제되며 되돌릴 수 없어요.
+                </p>
+                <div className="mt-2.5 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    className="flex-1 rounded-pill border border-hairline bg-field py-2 text-[13px] font-bold text-brand-ink"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    disabled={delLog.isPending}
+                    onClick={() =>
+                      delLog.mutate(id, {
+                        onSuccess: () => router.replace(`/tea/${tea.id}`),
+                      })
+                    }
+                    className="flex-1 rounded-pill bg-red-500 py-2 text-[13px] font-bold text-white transition-colors hover:bg-red-600 disabled:opacity-60"
+                  >
+                    {delLog.isPending ? "삭제 중…" : "삭제"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 기록 신고 (로그인 · 본인 글 아님) */}
         {data.is_authed && !data.is_owner && (

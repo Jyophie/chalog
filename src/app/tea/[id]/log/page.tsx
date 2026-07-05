@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Camera,
   Check,
@@ -15,7 +15,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useAddLog } from "@/hooks/use-teas";
+import { useAddLog, useLogForEdit, useUpdateLog } from "@/hooks/use-teas";
 import { teaLogSchema, BREWING_TOOLS } from "@/lib/schemas/tea";
 import type { BrewingToolEnum } from "@/lib/types/database";
 import { uploadTeaImage, UploadError } from "@/lib/storage";
@@ -154,10 +154,15 @@ function todayISO() {
 export default function LogPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
+  const editId = useSearchParams().get("edit");
+  const isEdit = !!editId;
   const addLog = useAddLog(id);
+  const updateLog = useUpdateLog(id, editId ?? "");
+  const editData = useLogForEdit(editId ?? "");
 
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
+  const prefilled = useRef(false);
 
   const [brewedAt, setBrewedAt] = useState(todayISO());
   const [photos, setPhotos] = useState<{ path: string; preview: string }[]>([]);
@@ -215,6 +220,27 @@ export default function LogPage() {
 
   const uploading = uploadingCount > 0;
 
+  // 편집 모드: 기존 값으로 1회 프리필
+  useEffect(() => {
+    const d = editData.data;
+    if (!isEdit || !d || prefilled.current) return;
+    prefilled.current = true;
+    const l = d.log;
+    setBrewedAt(l.brewed_at);
+    setPhotos(d.photos.map((p) => ({ path: p.path, preview: p.url })));
+    setWaterTemp(l.water_temperature ?? "");
+    setSteepTime(l.steeping_time ?? "");
+    setAmount(l.tea_amount ?? "");
+    setTool((l.tool as BrewingToolEnum | null) ?? undefined);
+    setTaste(l.taste_memo ?? "");
+    setAroma(l.aroma_memo ?? "");
+    setBitter(l.bitterness_level ?? undefined);
+    setAstringe(l.astringency_level ?? undefined);
+    setRating(l.rating ?? undefined);
+    setAdjust(l.next_adjustment ?? "");
+    setIsPublic(l.is_public);
+  }, [isEdit, editData.data]);
+
   async function onSubmit() {
     setError(null);
     if (photos.length === 0) {
@@ -241,19 +267,24 @@ export default function LogPage() {
       return;
     }
     try {
-      await addLog.mutateAsync(payload.data);
+      if (isEdit) {
+        await updateLog.mutateAsync(payload.data);
+      } else {
+        await addLog.mutateAsync(payload.data);
+      }
       router.replace(`/tea/${id}`);
     } catch {
       setError("저장에 실패했어요. 다시 시도해주세요.");
     }
   }
 
-  const busy = addLog.isPending || uploading;
+  const saving = addLog.isPending || updateLog.isPending;
+  const busy = saving || uploading;
 
   return (
     <PhoneFrame>
       <TopBar
-        title="기록 추가"
+        title={isEdit ? "기록 수정" : "기록 추가"}
         onBack={() => router.push(`/tea/${id}`)}
         right={
           // eslint-disable-next-line @next/next/no-img-element
@@ -500,11 +531,13 @@ export default function LogPage() {
           disabled={busy}
           className="mt-7 flex w-full items-center justify-center gap-2 rounded-pill bg-brand px-6 py-4 text-[16px] font-bold text-white shadow-brand transition-colors hover:bg-brand-dark disabled:opacity-60"
         >
-          {addLog.isPending
+          {saving
             ? "저장 중…"
             : uploading
               ? "사진 올리는 중…"
-              : "기록 저장하기"}
+              : isEdit
+                ? "수정 완료"
+                : "기록 저장하기"}
           {!busy && <Check className="size-[18px]" />}
         </button>
       </main>
