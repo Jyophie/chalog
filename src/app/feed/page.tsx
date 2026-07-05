@@ -8,6 +8,7 @@ import { useFeed, useToggleLike, type FeedItem } from "@/hooks/use-teas";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { TabHeader } from "@/components/layout/tab-header";
+import { NotificationBell } from "@/components/notification-bell";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -211,7 +212,11 @@ export default function FeedPage() {
   return (
     <PhoneFrame scroll={false}>
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <TabHeader title="피드" subtitle="다른 사람들의 차 기록" />
+        <TabHeader
+          title="피드"
+          subtitle="다른 사람들의 차 기록"
+          action={<NotificationBell enabled={isAuthed} />}
+        />
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-28 pt-1">
           {isLoading && (

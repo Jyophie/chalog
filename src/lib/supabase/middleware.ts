@@ -13,6 +13,7 @@ const PROTECTED_PREFIXES = [
   "/tea",
   "/log",
   "/my",
+  "/notifications",
 ];
 
 /**

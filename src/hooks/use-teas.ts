@@ -217,6 +217,42 @@ export function useToggleLogPublic(teaId: string) {
   });
 }
 
+export interface NotificationItem {
+  id: string;
+  type: "like" | "comment" | "reply";
+  read: boolean;
+  created_at: string;
+  log_id: string;
+  actor: string | null;
+  actor_avatar: string | null;
+  tea_name: string | null;
+  comment_body: string | null;
+}
+
+export interface NotificationsResponse {
+  items: NotificationItem[];
+  unread: number;
+}
+
+/** 내 알림 목록 + 안 읽은 수 (로그인 시) */
+export function useNotifications(enabled = true) {
+  return useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => fetchJson<NotificationsResponse>("/api/notifications"),
+    enabled,
+    refetchInterval: 60_000,
+  });
+}
+
+/** 알림 모두 읽음 */
+export function useMarkNotificationsRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => fetchJson("/api/notifications", { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+}
+
 export interface EditableLog {
   log: LogRow;
   photos: { path: string; url: string }[];
